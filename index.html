@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Worker Earning App</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <!-- AUTH SCREEN -->
+    <div id="authScreen" class="auth-screen">
+
+        <!-- LOGIN -->
+        <div id="loginBox" class="auth-box">
+            <h2>🔐 WorkerPay Login</h2>
+            <p>Login to your account</p>
+
+            <input
+                type="email"
+                id="loginEmail"
+                placeholder="Email"
+                autocomplete="email"
+            >
+
+            <input
+                type="password"
+                id="loginPassword"
+                placeholder="Password"
+                autocomplete="current-password"
+            >
+
+            <button onclick="loginUser()" class="primary full">
+                Login
+            </button>
+
+            <button onclick="showForgotPassword()" class="auth-link">
+                Forgot Password?
+            </button>
+
+            <p>
+                Don't have an account?
+                <button onclick="showSignup()" class="auth-link">
+                    Create Account
+                </button>
+            </p>
+
+            <div id="loginMessage" class="auth-message"></div>
+        </div>
+
+
+        <!-- SIGNUP -->
+        <div id="signupBox" class="auth-box" style="display: none;">
+            <h2>📝 Create Account</h2>
+            <p>Create your WorkerPay account</p>
+
+            <input
+                type="text"
+                id="signupUsername"
+                placeholder="Username"
+                autocomplete="username"
+            >
+
+            <input
+                type="email"
+                id="signupEmail"
+                placeholder="Email"
+                autocomplete="email"
+            >
+
+            <input
+                type="password"
+                id="signupPassword"
+                placeholder="Password"
+                autocomplete="new-password"
+            >
+
+            <input
+                type="password"
+                id="signupConfirmPassword"
+                placeholder="Confirm Password"
+                autocomplete="new-password"
+            >
+
+            <button onclick="signupUser()" class="primary full">
+                Create Account
+            </button>
+
+            <p>
+                Already have an account?
+                <button onclick="showLogin()" class="auth-link">
+                    Login
+                </button>
+            </p>
+
+            <div id="signupMessage" class="auth-message"></div>
+        </div>
+
+
+        <!-- FORGOT PASSWORD -->
+        <div id="forgotBox" class="auth-box" style="display: none;">
+            <h2>🔑 Reset Password</h2>
+            <p>Enter your registered email</p>
+
+            <input
+                type="email"
+                id="forgotEmail"
+                placeholder="Email"
+                autocomplete="email"
+            >
+
+            <button onclick="resetPassword()" class="primary full">
+                Send Reset Link
+            </button>
+
+            <button onclick="showLogin()" class="auth-link">
+                ← Back to Login
+            </button>
+
+            <div id="forgotMessage" class="auth-message"></div>
+        </div>
+
+    </div>
+
+
+    <!-- HEADER -->
+    <header class="header">
+        <div>
+            <h1>WorkerPay</h1>
+            <p>Piece Rate Earning System</p>
+        </div>
+    </header>
+
+
+    <main>
+
+        <!-- DASHBOARD -->
+        <section id="dashboard" class="section active">
+
+            <div class="welcome">
+                <h2>Worker Dashboard 👋</h2>
+                <p>Track your daily work and earnings</p>
+            </div>
+
+            <div class="user-welcome">
+                👋 Welcome,
+                <span id="loggedInUsername">User</span>
+
+                <button onclick="logout()">
+                    Logout
+                </button>
+            </div>
+
+
+            <!-- FREE TRIAL STATUS -->
+       <!-- FREE TRIAL CARD -->
+<div id="trialCard" class="trial-card" style="display:none;">
+
+    <div class="trial-card-icon" id="trialIcon">
+        🎉
+    </div>
+
+    <div class="trial-card-content">
+
+        <h3 id="trialTitle">
+            Your Free Trial Started
+        </h3>
+
+        <p id="trialMessage">
+            Aaj tumhara Free Trial ka 1st day hai.
+        </p>
+
+        <div id="trialProgress">
+            Free Trial: Day 1 / 3
+        </div>
+
+        <p id="trialNext">
+            Next: Premium ₹20/month
+        </p>
+
+    </div>
+
+    <button
+        id="premiumButton"
+        class="trial-premium-btn"
+        onclick="continuePremium()"
+    >
+        ₹20 / month
+    </button>
+
+</div>
+
+            <!-- STAT CARDS -->
+            <div class="cards">
+
+                <div class="card">
+                    <span>Today's Earning</span>
+                    <h2 id="todayEarning">₹0.00</h2>
+                </div>
+
+                <div class="card">
+                    <span>Today's Pieces</span>
+                    <h2 id="todayPieces">0</h2>
+                </div>
+
+                <div class="card">
+                    <span>Total Work Entries</span>
+                    <h2 id="totalEntries">0</h2>
+                </div>
+
+            </div>
+
+
+            <!-- QUICK ACTIONS -->
+            <div class="quick-actions">
+
+                <button
+                    onclick="showSection('addWork')"
+                    class="primary">
+                    ➕ Add Today's Work
+                </button>
+
+                <button onclick="showSection('history')">
+                    📋 Work History
+                </button>
+
+            </div>
+
+
+            <!-- TODAY WORK -->
+            <div class="panel">
+                <h2>Today's Work</h2>
+                <div id="todayWork"></div>
+            </div>
+
+        </section>
+
+
+        <!-- ADD WORK -->
+        <section id="addWork" class="section">
+
+            <div class="panel">
+
+                <h2>➕ Add Work</h2>
+
+
+                <!-- DATE -->
+                <label for="workDate">
+                    Date
+                </label>
+
+                <input
+                    type="date"
+                    id="workDate"
+                >
+
+
+                <!-- OPERATION -->
+                <label for="operationSelect">
+                    Operation
+                </label>
+
+                <select
+                    id="operationSelect"
+                    onchange="calculatePreview()">
+                </select>
+
+
+                <!-- RATE -->
+                <div
+                    id="rateDisplay"
+                    class="rate">
+                    Rate: ₹0.00 / piece
+                </div>
+
+
+                <!-- SIZE -->
+                <label for="sizeSelect">
+                    Size
+                </label>
+
+                <select id="sizeSelect">
+
+                    <option value="">
+                        Select Size
+                    </option>
+
+                    <option value="S">S</option>
+                    <option value="S1">S1</option>
+                    <option value="S2">S2</option>
+                    <option value="S3">S3</option>
+                    <option value="S4">S4</option>
+                    <option value="S5">S5</option>
+
+                    <option value="M">M</option>
+                    <option value="M1">M1</option>
+                    <option value="M2">M2</option>
+                    <option value="M3">M3</option>
+                    <option value="M4">M4</option>
+                    <option value="M5">M5</option>
+
+                    <option value="L">L</option>
+                    <option value="L1">L1</option>
+                    <option value="L2">L2</option>
+                    <option value="L3">L3</option>
+                    <option value="L4">L4</option>
+                    <option value="L5">L5</option>
+
+                    <option value="XL">XL</option>
+                    <option value="XL1">XL1</option>
+                    <option value="XL2">XL2</option>
+                    <option value="XL3">XL3</option>
+                    <option value="XL4">XL4</option>
+                    <option value="XL5">XL5</option>
+
+                    <option value="XXL">XXL</option>
+                    <option value="XXL1">XXL1</option>
+                    <option value="XXL2">XXL2</option>
+                    <option value="XXL3">XXL3</option>
+                    <option value="XXL4">XXL4</option>
+                    <option value="XXL5">XXL5</option>
+
+                </select>
+
+
+                <!-- CUT -->
+                <label for="cutSelect">
+                    CUT
+                </label>
+
+                <select id="cutSelect">
+
+                    <option value="">
+                        Select CUT
+                    </option>
+
+                    <option value="CUT 1">CUT 1</option>
+                    <option value="CUT 2">CUT 2</option>
+                    <option value="CUT 3">CUT 3</option>
+                    <option value="CUT 4">CUT 4</option>
+                    <option value="CUT 5">CUT 5</option>
+                    <option value="CUT 6">CUT 6</option>
+
+                </select>
+
+
+                <!-- QUANTITY -->
+                <label for="quantity">
+                    Quantity
+                </label>
+
+                <input
+                    type="number"
+                    id="quantity"
+                    min="1"
+                    placeholder="Enter quantity"
+                    oninput="calculatePreview()"
+                >
+
+
+                <!-- PIECE PHOTO -->
+                <label for="piecePhoto">
+                    📸 Piece Photo
+                </label>
+
+                <input
+                    type="file"
+                    id="piecePhoto"
+                    class="photo-input"
+                    accept="image/*"
+                    capture="environment"
+                >
+
+
+                <!-- PHOTO PREVIEW -->
+                <div
+                    id="photoPreview"
+                    class="photo-preview">
+                </div>
+
+
+                <!-- EARNING -->
+                <div class="earning-preview">
+
+                    <span>
+                        Your Earning
+                    </span>
+
+                    <strong id="previewEarning">
+                        ₹0.00
+                    </strong>
+
+                </div>
+
+
+                <!-- SAVE -->
+                <button
+                    onclick="saveWork()"
+                    class="primary full">
+                    💾 Save Work
+                </button>
+
+
+                <!-- BACK -->
+                <button
+                    onclick="showSection('dashboard')"
+                    class="back">
+                    ← Back
+                </button>
+
+            </div>
+
+        </section>
+
+
+        <!-- HISTORY -->
+        <section id="history" class="section">
+
+            <div class="section-title">
+                <h2>Work History</h2>
+            </div>
+
+            <div class="panel">
+
+                <div id="historyList"></div>
+
+                <button
+                    class="back"
+                    onclick="showSection('dashboard')">
+                    ← Back to Dashboard
+                </button>
+
+            </div>
+
+        </section>
+
+
+        <!-- EARNINGS -->
+        <section id="earnings" class="section">
+
+            <div class="section-title">
+
+                <h2>💰 My Earnings</h2>
+
+                <p>
+                    Your complete earning summary
+                </p>
+
+            </div>
+
+
+            <div class="earnings-summary">
+
+                <div class="earning-main-card">
+
+                    <span>
+                        Lifetime Earning
+                    </span>
+
+                    <strong id="lifetimeEarning">
+                        ₹0.00
+                    </strong>
+
+                </div>
+
+
+                <div class="earning-stats">
+
+                    <div class="earning-stat">
+
+                        <span>
+                            Total Pieces
+                        </span>
+
+                        <strong id="lifetimePieces">
+                            0
+                        </strong>
+
+                    </div>
+
+
+                    <div class="earning-stat">
+
+                        <span>
+                            Total Work Entries
+                        </span>
+
+                        <strong id="lifetimeEntries">
+                            0
+                        </strong>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div class="card">
+
+                <div id="dateWiseEarnings"></div>
+
+            </div>
+
+        </section>
+
+
+        <!-- ADMIN -->
+        <section id="admin" class="section">
+
+            <div class="panel">
+
+                <h2>
+                    ⚙️ Manage Operations
+                </h2>
+
+                <p class="muted">
+                    Add new work or change the current rate.
+                </p>
+
+
+                <div class="admin-form">
+
+                    <input
+                        type="text"
+                        id="newOperation"
+                        placeholder="Work name"
+                    >
+
+                    <input
+                        type="number"
+                        id="newRate"
+                        min="0"
+                        step="0.01"
+                        placeholder="Rate ₹"
+                    >
+
+                    <button
+                        onclick="addOperation()"
+                        class="primary">
+                        + Add Work
+                    </button>
+
+                </div>
+
+
+                <!-- OPERATION LIST -->
+                <div id="operationList"></div>
+
+
+                <button
+                    onclick="showSection('dashboard')"
+                    class="back">
+                    ← Dashboard
+                </button>
+
+            </div>
+
+        </section>
+
+    </main>
+
+
+    <!-- BOTTOM NAVIGATION -->
+    <nav class="bottom-nav">
+
+        <button
+            onclick="showSection('dashboard')">
+            🏠
+            <span>Home</span>
+        </button>
+
+
+        <button
+            onclick="showSection('addWork')">
+            ➕
+            <span>Add Work</span>
+        </button>
+
+
+        <button
+            onclick="showSection('history')">
+            📋
+            <span>History</span>
+        </button>
+
+
+        <button
+            onclick="showSection('earnings')">
+            💰
+            <span>Earnings</span>
+        </button>
+
+
+        <button
+            onclick="showSection('admin')">
+            ⚙️
+            <span>Admin</span>
+        </button>
+
+    </nav>
+
+
+    <!-- JAVASCRIPT -->
+  <script type="module" src="script.js"></script>
+
+</body>
+
+</html>
