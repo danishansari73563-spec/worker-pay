@@ -2274,6 +2274,83 @@ window.editOperation =
 window.deleteOperation =
   deleteOperation;
 
+  // ======================================================
+// RAZORPAY PREMIUM SUBSCRIPTION
+// ======================================================
+
+async function continuePremium() {
+  const user = auth.currentUser;
+
+  if (!user) {
+    alert("Please login first.");
+    return;
+  }
+
+  try {
+    // Create Razorpay subscription from Vercel backend
+    const response = await fetch("/api/create-subscription", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        userId: user.uid,
+        email: user.email,
+        name: user.displayName || "WorkerPay User"
+      })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok || !data.subscriptionId) {
+      console.error("Subscription error:", data);
+      alert("Unable to start Premium. Please try again.");
+      return;
+    }
+
+    // Load Razorpay Checkout
+    const options = {
+      key: "rzp_live_TYkJpDlsipwl5D",
+
+      subscription_id: data.subscriptionId,
+
+      name: "WorkerPay",
+      description: "WorkerPay Premium - ₹20/month",
+
+      prefill: {
+        name: user.displayName || "",
+        email: user.email || ""
+      },
+
+      theme: {
+        color: "#111827"
+      },
+
+      handler: async function (response) {
+        console.log("Razorpay payment response:", response);
+
+        alert("Payment successful! Premium activation will be completed.");
+
+        // Premium verification will be added in the next step.
+      },
+
+      modal: {
+        ondismiss: function () {
+          console.log("Razorpay checkout closed.");
+        }
+      }
+    };
+
+    const rzp = new Razorpay(options);
+    rzp.open();
+
+  } catch (error) {
+    console.error("Premium error:", error);
+    alert("Something went wrong. Please try again.");
+  }
+}
+
+window.continuePremium = continuePremium;
 
 // ======================================================
 // START
