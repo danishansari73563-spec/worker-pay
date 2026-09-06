@@ -1678,69 +1678,56 @@ function getTodayEntries() {
 // DASHBOARD
 // ======================================================
 
-function updateDashboard() {
-
-  const todayEarning =
-    $("todayEarning");
-
-  const todayPieces =
-    $("todayPieces");
-
-  const totalEntries =
-    $("totalEntries");
-
-  const todayWork =
-    $("todayWork");
 
 
-  const todayEntries =
-    getTodayEntries();
+  function updateDashboard() {
 
+  const todayEarning = $("todayEarning");
+  const todayPieces = $("todayPieces");
+  const totalEntries = $("totalEntries");
+  const todayWork = $("todayWork");
 
-  const earning =
-    todayEntries.reduce(
-      (total, entry) =>
-        total + Number(entry.earning),
-      0
-    );
+  // Sirf aaj ki entries
+  const todayEntries = getTodayEntries();
 
+  // Aaj ki earning
+  const earning = todayEntries.reduce(
+    (total, entry) => {
+      return total + Number(entry.earning || 0);
+    },
+    0
+  );
 
-  const pieces =
-    todayEntries.reduce(
-      (total, entry) =>
-        total + Number(entry.quantity),
-      0
-    );
+  // Aaj ke pieces
+  const pieces = todayEntries.reduce(
+    (total, entry) => {
+      return total + Number(entry.quantity || 0);
+    },
+    0
+  );
 
+  // Aaj ki total work entries
+  const entriesCount = todayEntries.length;
 
   if (todayEarning) {
-
     todayEarning.textContent =
       `₹${earning.toFixed(2)}`;
-
   }
-
 
   if (todayPieces) {
-
     todayPieces.textContent =
       pieces;
-
   }
-
 
   if (totalEntries) {
-
     totalEntries.textContent =
-      workHistory.length;
-
+      entriesCount;
   }
 
-
+  // Today's Work
   if (todayWork) {
 
-    todayWork.innerHTML =
-      "";
+    todayWork.innerHTML = "";
 
     if (todayEntries.length === 0) {
 
@@ -1760,10 +1747,8 @@ function updateDashboard() {
           const div =
             document.createElement("div");
 
-
           div.className =
             "today-work-item";
-
 
           div.innerHTML = `
             <div>
@@ -1778,26 +1763,20 @@ function updateDashboard() {
               </div>
 
               <div>
-                Qty: ${entry.quantity}
+                Qty: ${Number(entry.quantity)}
               </div>
             </div>
 
             <strong>
-              ₹${Number(entry.earning).toFixed(2)}
+              ₹${Number(entry.earning || 0).toFixed(2)}
             </strong>
           `;
 
-
           todayWork.appendChild(div);
-
         });
-
     }
-
   }
-
 }
-
 
 // ======================================================
 // EARNINGS
