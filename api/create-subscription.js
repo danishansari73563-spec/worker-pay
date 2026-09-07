@@ -41,7 +41,7 @@ export default async function handler(req, res) {
     // Create Razorpay subscription
     const subscription = await razorpay.subscriptions.create({
       plan_id: "plan_TYkimGWeJo3WeW",
-      total_count: 1200,
+      total_count: 120,
       quantity: 1,
       customer_notify: 1,
 
