@@ -10,6 +10,16 @@ export default async function handler(req, res) {
   }
 
   try {
+    // Get Firebase user information
+    const { userId, email, name } = req.body || {};
+
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        error: "Firebase userId is required."
+      });
+    }
+
     // Check environment variables
     if (
       !process.env.RZP_KEY_ID ||
@@ -20,15 +30,6 @@ export default async function handler(req, res) {
       return res.status(500).json({
         success: false,
         error: "Razorpay configuration is missing on server."
-      });
-    }
-
-    const { userId, email, name } = req.body || {};
-
-    if (!userId) {
-      return res.status(400).json({
-        success: false,
-        error: "Firebase userId is required."
       });
     }
 
@@ -45,8 +46,8 @@ export default async function handler(req, res) {
       quantity: 1,
       customer_notify: 1,
 
-      // IMPORTANT:
-      // Webhook uses this Firebase UID
+      // Firebase UID goes into Razorpay subscription
+      // Webhook will use this UID
       notes: {
         firebase_uid: userId,
         email: email || "",
