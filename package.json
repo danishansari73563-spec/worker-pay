@@ -1,5 +1,6 @@
 {
   "dependencies": {
-    "razorpay": "^2.9.8"
+    "razorpay": "^2.9.8",
+    "firebase-admin": "^13.4.0"
   }
 }
