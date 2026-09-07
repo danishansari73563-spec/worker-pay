@@ -2556,28 +2556,71 @@ async function continuePremium() {
       },
 
 
-      handler:
-        async function (
-          response
-        ) {
+   handler: async function (response) {
+  console.log(
+    "Razorpay payment response:",
+    response
+  );
 
-          console.log(
-            "Razorpay payment response:",
-            response
-          );
+  alert(
+    "Payment successful! Premium activation is being activated..."
+  );
 
+  // Wait for Razorpay webhook to update Firestore
+  let premiumActivated = false;
 
-          alert(
-            "Payment successful! Premium activation will be completed."
-          );
+  for (let i = 0; i < 10; i++) {
+    await new Promise(resolve =>
+      setTimeout(resolve, 2000)
+    );
 
+    const currentUser = auth.currentUser;
 
-          // Local UI update after successful payment
-          // Actual payment verification should happen on backend.
+    if (!currentUser) {
+      break;
+    }
 
-          await refreshTrialUI();
+    const userRef = doc(
+      db,
+      "users",
+      currentUser.uid
+    );
 
-        },
+    const userSnap = await getDoc(userRef);
+
+    if (userSnap.exists()) {
+      const userData = userSnap.data();
+
+      console.log(
+        "Checking Premium status:",
+        userData.subscriptionStatus
+      );
+
+      if (
+        userData.subscriptionStatus ===
+        "premium"
+      ) {
+        premiumActivated = true;
+
+        alert(
+          "🎉 Premium Activated Successfully!"
+        );
+
+        await refreshTrialUI();
+
+        break;
+      }
+    }
+  }
+
+  if (!premiumActivated) {
+    alert(
+      "Payment successful. Premium activation is still processing. Please refresh after a moment."
+    );
+
+    await refreshTrialUI();
+  }
+},
 
 
       modal: {
