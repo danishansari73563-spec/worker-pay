@@ -1,47 +1,69 @@
 // ======================================================
 // WORKERPAY - COMPLETE script.js
-// Firebase + 3-Day Free Trial + Razorpay Subscription
+// Firebase Auth + Firestore
+// Add Work + History + Delete Work
+// 3-Day Free Trial
+// Premium ₹20/month - Razorpay
+// Trial/Premium UI ONLY ON DASHBOARD
 // ======================================================
 
-// ================= FIREBASE IMPORTS ====================
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
+// ======================================================
+// FIREBASE IMPORTS
+// ======================================================
 
-import {
-  getAuth,
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-  sendPasswordResetEmail,
-  signOut,
-  onAuthStateChanged,
-  updateProfile
-} from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
+import { initializeApp } from
+    "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
 
 import {
-  getFirestore,
-  doc,
-  setDoc,
-  getDoc,
-  serverTimestamp
-} from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
+    getAuth,
+    createUserWithEmailAndPassword,
+    signInWithEmailAndPassword,
+    sendPasswordResetEmail,
+    signOut,
+    onAuthStateChanged,
+    updateProfile
+} from
+    "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
+
+import {
+    getFirestore,
+    doc,
+    setDoc,
+    getDoc,
+    deleteDoc,
+    collection,
+    getDocs,
+    addDoc,
+    query,
+    orderBy,
+    serverTimestamp
+} from
+    "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
 
 
-// ================= FIREBASE CONFIG =====================
+// ======================================================
+// FIREBASE CONFIG
+// ======================================================
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDT5PdWyAyqrfGtEh9kYyeHvFA3DQ7QDsA",
-  authDomain: "worker-pay.firebaseapp.com",
-  projectId: "worker-pay",
-  storageBucket: "worker-pay.firebasestorage.app",
-  messagingSenderId: "145618936395",
-  appId: "1:145618936395:web:310a3e79e52c9b733763ce"
+    apiKey: "AIzaSyDT5PdWyAyqrfGtEh9kYyeHvFA3DQ7QDsA",
+    authDomain: "worker-pay.firebaseapp.com",
+    projectId: "worker-pay",
+    storageBucket: "worker-pay.firebasestorage.app",
+    messagingSenderId: "145618936395",
+    appId: "1:145618936395:web:310a3e79e52b9b733763ce"
 };
 
 
-// ================= INITIALIZE FIREBASE =================
+// ======================================================
+// INITIALIZE FIREBASE
+// ======================================================
 
 const app = initializeApp(firebaseConfig);
+
 const auth = getAuth(app);
+
 const db = getFirestore(app);
 
 
@@ -57,54 +79,54 @@ const $ = (id) => document.getElementById(id);
 // ======================================================
 
 let operations = [
-  {
-    name: "Kafa Stitching",
-    rate: 3.75
-  },
-  {
-    name: "Badan Patti",
-    rate: 0.90
-  },
-  {
-    name: "Kacha Patti",
-    rate: 0.90
-  },
-  {
-    name: "Button Patti / Kaj Patti",
-    rate: 1.90
-  },
-  {
-    name: "Back Shoulder",
-    rate: 1.40
-  },
-  {
-    name: "Sleeve Hemming",
-    rate: 1.60
-  },
-  {
-    name: "Collar Making",
-    rate: 6
-  },
-  {
-    name: "Cup Making",
-    rate: 3
-  },
-  {
-    name: "Bottom",
-    rate: 3
-  },
-  {
-    name: "Sleeve Patti",
-    rate: 5
-  },
-  {
-    name: "Sleeve Attach",
-    rate: 5
-  },
-  {
-    name: "Kandhi",
-    rate: 1.90
-  }
+    {
+        name: "Kafa Stitching",
+        rate: 3.75
+    },
+    {
+        name: "Badan Patti",
+        rate: 0.90
+    },
+    {
+        name: "Kacha Patti",
+        rate: 0.90
+    },
+    {
+        name: "Button Patti / Kaj Patti",
+        rate: 1.90
+    },
+    {
+        name: "Back Shoulder",
+        rate: 1.40
+    },
+    {
+        name: "Sleeve Hemming",
+        rate: 1.60
+    },
+    {
+        name: "Collar Making",
+        rate: 6.00
+    },
+    {
+        name: "Cup Making",
+        rate: 3.00
+    },
+    {
+        name: "Bottom",
+        rate: 3.00
+    },
+    {
+        name: "Sleeve Patti",
+        rate: 5.00
+    },
+    {
+        name: "Sleeve Attach",
+        rate: 5.00
+    },
+    {
+        name: "Kandhi",
+        rate: 1.90
+    }
 ];
 
 
@@ -116,195 +138,238 @@ let workHistory = [];
 
 
 // ======================================================
-// LOAD LOCAL DATA
+// LOCAL DATA LOAD
 // ======================================================
 
 function loadLocalData() {
 
-  try {
+    try {
 
-    const savedOperations =
-      localStorage.getItem("workerpay_operations");
+        const savedOperations =
+            localStorage.getItem("workerpay_operations");
 
-    if (savedOperations) {
+        if (savedOperations) {
 
-      const parsed = JSON.parse(savedOperations);
+            const parsed =
+                JSON.parse(savedOperations);
 
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        operations = parsed;
-      }
+            if (
+                Array.isArray(parsed) &&
+                parsed.length > 0
+            ) {
 
-    }
+                operations = parsed;
 
-  } catch (error) {
+            }
 
-    console.error("Operations load error:", error);
+        }
 
-  }
+    } catch (error) {
 
-
-  try {
-
-    const savedHistory =
-      localStorage.getItem("workerpay_history");
-
-    if (savedHistory) {
-
-      const parsedHistory =
-        JSON.parse(savedHistory);
-
-      if (Array.isArray(parsedHistory)) {
-        workHistory = parsedHistory;
-      }
+        console.error(
+            "Operations load error:",
+            error
+        );
 
     }
 
-  } catch (error) {
 
-    console.error("History load error:", error);
+    try {
 
-  }
+        const savedHistory =
+            localStorage.getItem("workerpay_history");
+
+        if (savedHistory) {
+
+            const parsedHistory =
+                JSON.parse(savedHistory);
+
+            if (Array.isArray(parsedHistory)) {
+
+                workHistory = parsedHistory;
+
+            }
+
+        }
+
+    } catch (error) {
+
+        console.error(
+            "History load error:",
+            error
+        );
+
+    }
 
 }
 
 
 // ======================================================
-// SAVE LOCAL DATA
+// LOCAL DATA SAVE
 // ======================================================
 
 function saveLocalData() {
 
-  try {
+    try {
 
-    localStorage.setItem(
-      "workerpay_operations",
-      JSON.stringify(operations)
-    );
+        localStorage.setItem(
+            "workerpay_operations",
+            JSON.stringify(operations)
+        );
 
-    localStorage.setItem(
-      "workerpay_history",
-      JSON.stringify(workHistory)
-    );
+        localStorage.setItem(
+            "workerpay_history",
+            JSON.stringify(workHistory)
+        );
 
-  } catch (error) {
+    } catch (error) {
 
-    console.error("Local save error:", error);
+        console.error(
+            "Local save error:",
+            error
+        );
 
-  }
+    }
 
 }
 
 
 // ======================================================
-// AUTH SCREEN VISIBILITY
+// APP VISIBILITY
 // ======================================================
 
 function setAppVisibility(loggedIn) {
 
-  const authScreen = $("authScreen");
-  const header = document.querySelector(".header");
-  const main = document.querySelector("main");
-  const bottomNav = document.querySelector(".bottom-nav");
-  const trialBanner = $("trialBanner");
+    const authScreen = $("authScreen");
 
-  if (authScreen) {
-    authScreen.style.display =
-      loggedIn ? "none" : "flex";
-  }
+    const header =
+        document.querySelector(".header");
 
-  if (header) {
-    header.style.display =
-      loggedIn ? "" : "none";
-  }
+    const main =
+        document.querySelector("main");
 
-  if (main) {
-    main.style.display =
-      loggedIn ? "" : "none";
-  }
+    const bottomNav =
+        document.querySelector(".bottom-nav");
 
-  if (bottomNav) {
-    bottomNav.style.display =
-      loggedIn ? "" : "none";
-  }
 
-  if (!loggedIn && trialBanner) {
-    trialBanner.style.display = "none";
-  }
+    if (authScreen) {
+
+        authScreen.style.display =
+            loggedIn ? "none" : "flex";
+
+    }
+
+
+    if (header) {
+
+        header.style.display =
+            loggedIn ? "" : "none";
+
+    }
+
+
+    if (main) {
+
+        main.style.display =
+            loggedIn ? "" : "none";
+
+    }
+
+
+    if (bottomNav) {
+
+        bottomNav.style.display =
+            loggedIn ? "" : "none";
+
+    }
+
+
+    if (!loggedIn) {
+
+        hideTrialUI();
+
+    }
 
 }
 
 
 // ======================================================
-// AUTH - SHOW LOGIN
+// LOGIN SCREEN
 // ======================================================
 
 function showLogin() {
 
-  const loginBox = $("loginBox");
-  const signupBox = $("signupBox");
-  const forgotBox = $("forgotBox");
+    const loginBox = $("loginBox");
 
-  if (loginBox) {
-    loginBox.style.display = "block";
-  }
+    const signupBox = $("signupBox");
 
-  if (signupBox) {
-    signupBox.style.display = "none";
-  }
+    const forgotBox = $("forgotBox");
 
-  if (forgotBox) {
-    forgotBox.style.display = "none";
-  }
+
+    if (loginBox)
+        loginBox.style.display = "block";
+
+
+    if (signupBox)
+        signupBox.style.display = "none";
+
+
+    if (forgotBox)
+        forgotBox.style.display = "none";
 
 }
 
 
 // ======================================================
-// AUTH - SHOW SIGNUP
+// SIGNUP SCREEN
 // ======================================================
 
 function showSignup() {
 
-  const loginBox = $("loginBox");
-  const signupBox = $("signupBox");
-  const forgotBox = $("forgotBox");
+    const loginBox = $("loginBox");
 
-  if (loginBox) {
-    loginBox.style.display = "none";
-  }
+    const signupBox = $("signupBox");
 
-  if (signupBox) {
-    signupBox.style.display = "block";
-  }
+    const forgotBox = $("forgotBox");
 
-  if (forgotBox) {
-    forgotBox.style.display = "none";
-  }
+
+    if (loginBox)
+        loginBox.style.display = "none";
+
+
+    if (signupBox)
+        signupBox.style.display = "block";
+
+
+    if (forgotBox)
+        forgotBox.style.display = "none";
 
 }
 
 
 // ======================================================
-// AUTH - SHOW FORGOT PASSWORD
+// FORGOT PASSWORD SCREEN
 // ======================================================
 
 function showForgotPassword() {
 
-  const loginBox = $("loginBox");
-  const signupBox = $("signupBox");
-  const forgotBox = $("forgotBox");
+    const loginBox = $("loginBox");
 
-  if (loginBox) {
-    loginBox.style.display = "none";
-  }
+    const signupBox = $("signupBox");
 
-  if (signupBox) {
-    signupBox.style.display = "none";
-  }
+    const forgotBox = $("forgotBox");
 
-  if (forgotBox) {
-    forgotBox.style.display = "block";
-  }
+
+    if (loginBox)
+        loginBox.style.display = "none";
+
+
+    if (signupBox)
+        signupBox.style.display = "none";
+
+
+    if (forgotBox)
+        forgotBox.style.display = "block";
 
 }
 
@@ -315,71 +380,97 @@ function showForgotPassword() {
 
 async function loginUser() {
 
-  const emailElement = $("loginEmail");
-  const passwordElement = $("loginPassword");
-  const messageElement = $("loginMessage");
+    const email =
+        $("loginEmail")?.value.trim();
 
-  const email = emailElement?.value.trim();
-  const password = passwordElement?.value;
+    const password =
+        $("loginPassword")?.value;
 
-  if (!email || !password) {
-
-    if (messageElement) {
-      messageElement.textContent =
-        "Please enter email and password.";
-    }
-
-    return;
-  }
+    const message =
+        $("loginMessage");
 
 
-  try {
+    if (!email || !password) {
 
-    if (messageElement) {
-      messageElement.textContent = "Logging in...";
-    }
+        if (message) {
 
-    await signInWithEmailAndPassword(
-      auth,
-      email,
-      password
-    );
+            message.textContent =
+                "Please enter email and password.";
 
-    if (messageElement) {
-      messageElement.textContent = "";
-    }
+        }
 
-  } catch (error) {
-
-    console.error("Login error:", error);
-
-    if (messageElement) {
-
-      if (error.code === "auth/invalid-credential") {
-
-        messageElement.textContent =
-          "Invalid email or password.";
-
-      } else if (error.code === "auth/user-not-found") {
-
-        messageElement.textContent =
-          "Account not found.";
-
-      } else if (error.code === "auth/wrong-password") {
-
-        messageElement.textContent =
-          "Wrong password.";
-
-      } else {
-
-        messageElement.textContent =
-          error.message;
-
-      }
+        return;
 
     }
 
-  }
+
+    try {
+
+        if (message) {
+
+            message.textContent =
+                "Logging in...";
+
+        }
+
+
+        await signInWithEmailAndPassword(
+            auth,
+            email,
+            password
+        );
+
+
+        if (message) {
+
+            message.textContent = "";
+
+        }
+
+    } catch (error) {
+
+        console.error(
+            "Login error:",
+            error
+        );
+
+
+        if (message) {
+
+            if (
+                error.code ===
+                "auth/invalid-credential"
+            ) {
+
+                message.textContent =
+                    "Invalid email or password.";
+
+            } else if (
+                error.code ===
+                "auth/user-not-found"
+            ) {
+
+                message.textContent =
+                    "Account not found.";
+
+            } else if (
+                error.code ===
+                "auth/wrong-password"
+            ) {
+
+                message.textContent =
+                    "Wrong password.";
+
+            } else {
+
+                message.textContent =
+                    error.message;
+
+            }
+
+        }
+
+    }
 
 }
 
@@ -390,175 +481,204 @@ async function loginUser() {
 
 async function signupUser() {
 
-  const usernameElement = $("signupUsername");
-  const emailElement = $("signupEmail");
-  const passwordElement = $("signupPassword");
-  const confirmPasswordElement =
-    $("signupConfirmPassword");
+    const username =
+        $("signupUsername")?.value.trim();
 
-  const messageElement = $("signupMessage");
+    const email =
+        $("signupEmail")?.value.trim();
 
-  const username = usernameElement?.value.trim();
-  const email = emailElement?.value.trim();
-  const password = passwordElement?.value;
-  const confirmPassword =
-    confirmPasswordElement?.value;
+    const password =
+        $("signupPassword")?.value;
 
+    const confirmPassword =
+        $("signupConfirmPassword")?.value;
 
-  if (
-    !username ||
-    !email ||
-    !password ||
-    !confirmPassword
-  ) {
-
-    if (messageElement) {
-      messageElement.textContent =
-        "Please fill all fields.";
-    }
-
-    return;
-  }
+    const message =
+        $("signupMessage");
 
 
-  if (password.length < 6) {
+    if (
+        !username ||
+        !email ||
+        !password ||
+        !confirmPassword
+    ) {
 
-    if (messageElement) {
-      messageElement.textContent =
-        "Password must be at least 6 characters.";
-    }
+        if (message) {
 
-    return;
-  }
+            message.textContent =
+                "Please fill all fields.";
 
+        }
 
-  if (password !== confirmPassword) {
+        return;
 
-    if (messageElement) {
-      messageElement.textContent =
-        "Passwords do not match.";
-    }
-
-    return;
-  }
-
-
-  try {
-
-    if (messageElement) {
-      messageElement.textContent =
-        "Creating account...";
     }
 
 
-    // Create Firebase Auth account
+    if (password.length < 6) {
 
-    const userCredential =
-      await createUserWithEmailAndPassword(
-        auth,
-        email,
-        password
-      );
+        if (message) {
 
+            message.textContent =
+                "Password must be at least 6 characters.";
 
-    const user = userCredential.user;
+        }
 
+        return;
 
-    // Save username in Firebase Authentication
-
-    await updateProfile(user, {
-      displayName: username
-    });
+    }
 
 
-    // Create 3-day trial
+    if (password !== confirmPassword) {
 
-    const trialStart = new Date();
+        if (message) {
 
-    const trialEnd =
-      new Date(trialStart);
+            message.textContent =
+                "Passwords do not match.";
 
-    trialEnd.setDate(
-      trialEnd.getDate() + 3
-    );
+        }
 
+        return;
 
-    // Save user information in Firestore
+    }
+
 
     try {
 
-      await setDoc(
-        doc(db, "users", user.uid),
-        {
-          uid: user.uid,
-          username: username,
-          email: email,
-          createdAt: serverTimestamp(),
+        if (message) {
 
-          trialStart: trialStart,
-          trialEnd: trialEnd,
+            message.textContent =
+                "Creating account...";
 
-          subscriptionStatus: "trial"
         }
-      );
 
-    } catch (firestoreError) {
 
-      console.error(
-        "Firestore user save error:",
-        firestoreError
-      );
+        const userCredential =
+            await createUserWithEmailAndPassword(
+                auth,
+                email,
+                password
+            );
+
+
+        const user =
+            userCredential.user;
+
+
+        await updateProfile(
+            user,
+            {
+                displayName: username
+            }
+        );
+
+
+        // ==================================================
+        // 3 DAY FREE TRIAL
+        // ==================================================
+
+        const trialStart =
+            new Date();
+
+
+        const trialEnd =
+            new Date(trialStart);
+
+
+        trialEnd.setDate(
+            trialEnd.getDate() + 3
+        );
+
+
+        // ==================================================
+        // CREATE USER DOCUMENT
+        // ==================================================
+
+        await setDoc(
+            doc(
+                db,
+                "users",
+                user.uid
+            ),
+            {
+
+                uid:
+                    user.uid,
+
+                username:
+                    username,
+
+                email:
+                    email,
+
+                createdAt:
+                    serverTimestamp(),
+
+                trialStart:
+                    trialStart,
+
+                trialEnd:
+                    trialEnd,
+
+                subscriptionStatus:
+                    "trial"
+
+            }
+        );
+
+
+        if (message) {
+
+            message.textContent =
+                `Welcome, ${username}!`;
+
+        }
+
+    } catch (error) {
+
+        console.error(
+            "Signup error:",
+            error
+        );
+
+
+        if (message) {
+
+            if (
+                error.code ===
+                "auth/email-already-in-use"
+            ) {
+
+                message.textContent =
+                    "This email is already registered.";
+
+            } else if (
+                error.code ===
+                "auth/invalid-email"
+            ) {
+
+                message.textContent =
+                    "Please enter a valid email.";
+
+            } else if (
+                error.code ===
+                "auth/weak-password"
+            ) {
+
+                message.textContent =
+                    "Password is too weak.";
+
+            } else {
+
+                message.textContent =
+                    error.message;
+
+            }
+
+        }
 
     }
-
-
-    if (messageElement) {
-
-      messageElement.textContent =
-        `Welcome, ${username}!`;
-
-    }
-
-  } catch (error) {
-
-    console.error("Signup error:", error);
-
-    if (messageElement) {
-
-      if (
-        error.code ===
-        "auth/email-already-in-use"
-      ) {
-
-        messageElement.textContent =
-          "This email is already registered.";
-
-      } else if (
-        error.code ===
-        "auth/invalid-email"
-      ) {
-
-        messageElement.textContent =
-          "Please enter a valid email.";
-
-      } else if (
-        error.code ===
-        "auth/weak-password"
-      ) {
-
-        messageElement.textContent =
-          "Password is too weak.";
-
-      } else {
-
-        messageElement.textContent =
-          error.message;
-
-      }
-
-    }
-
-  }
 
 }
 
@@ -569,65 +689,58 @@ async function signupUser() {
 
 async function resetPassword() {
 
-  const emailElement = $("forgotEmail");
-  const messageElement = $("forgotMessage");
+    const email =
+        $("forgotEmail")?.value.trim();
 
-  const email =
-    emailElement?.value.trim();
-
-
-  if (!email) {
-
-    if (messageElement) {
-      messageElement.textContent =
-        "Please enter your email.";
-    }
-
-    return;
-  }
+    const message =
+        $("forgotMessage");
 
 
-  try {
+    if (!email) {
 
-    await sendPasswordResetEmail(
-      auth,
-      email
-    );
+        if (message) {
 
-    if (messageElement) {
+            message.textContent =
+                "Please enter your email.";
 
-      messageElement.textContent =
-        "Password reset email sent. Check your inbox.";
+        }
+
+        return;
 
     }
 
-  } catch (error) {
 
-    console.error(
-      "Password reset error:",
-      error
-    );
+    try {
 
-    if (messageElement) {
+        await sendPasswordResetEmail(
+            auth,
+            email
+        );
 
-      if (
-        error.code ===
-        "auth/user-not-found"
-      ) {
 
-        messageElement.textContent =
-          "No account found with this email.";
+        if (message) {
 
-      } else {
+            message.textContent =
+                "Password reset email sent. Check your inbox.";
 
-        messageElement.textContent =
-          error.message;
+        }
 
-      }
+    } catch (error) {
+
+        console.error(
+            "Password reset error:",
+            error
+        );
+
+
+        if (message) {
+
+            message.textContent =
+                error.message;
+
+        }
 
     }
-
-  }
 
 }
 
@@ -638,68 +751,18 @@ async function resetPassword() {
 
 async function logout() {
 
-  try {
+    try {
 
-    await signOut(auth);
+        await signOut(auth);
 
-  } catch (error) {
+    } catch (error) {
 
-    console.error(
-      "Logout error:",
-      error
-    );
-
-  }
-
-}
-
-
-// ======================================================
-// UPDATE LOGGED-IN USERNAME
-// ======================================================
-
-async function updateLoggedInUsername(user) {
-
-  const usernameElement =
-    $("loggedInUsername");
-
-  if (!usernameElement) return;
-
-  let username =
-    user.displayName || "";
-
-
-  try {
-
-    const userDoc =
-      await getDoc(
-        doc(db, "users", user.uid)
-      );
-
-
-    if (userDoc.exists()) {
-
-      const data =
-        userDoc.data();
-
-      username =
-        data.username ||
-        username;
+        console.error(
+            "Logout error:",
+            error
+        );
 
     }
-
-  } catch (error) {
-
-    console.error(
-      "Username fetch error:",
-      error
-    );
-
-  }
-
-
-  usernameElement.textContent =
-    username || "User";
 
 }
 
@@ -710,36 +773,90 @@ async function updateLoggedInUsername(user) {
 
 async function getCurrentUserData(user) {
 
-  if (!user) return null;
+    if (!user)
+        return null;
 
 
-  try {
+    try {
 
-    const userDoc =
-      await getDoc(
-        doc(db, "users", user.uid)
-      );
+        const userRef =
+            doc(
+                db,
+                "users",
+                user.uid
+            );
 
 
-    if (userDoc.exists()) {
+        const snapshot =
+            await getDoc(userRef);
 
-      return userDoc.data();
+
+        if (snapshot.exists()) {
+
+            return snapshot.data();
+
+        }
+
+
+        return null;
+
+    } catch (error) {
+
+        console.error(
+            "User data error:",
+            error
+        );
+
+        return null;
+
+    }
+
+}
+
+
+// ======================================================
+// USERNAME
+// ======================================================
+
+async function updateLoggedInUsername(user) {
+
+    const usernameElement =
+        $("loggedInUsername");
+
+
+    if (!usernameElement)
+        return;
+
+
+    let username =
+        user.displayName || "User";
+
+
+    try {
+
+        const userData =
+            await getCurrentUserData(user);
+
+
+        if (
+            userData &&
+            userData.username
+        ) {
+
+            username =
+                userData.username;
+
+        }
+
+    } catch (error) {
+
+        console.error(error);
 
     }
 
 
-    return null;
-
-  } catch (error) {
-
-    console.error(
-      "User data fetch error:",
-      error
-    );
-
-    return null;
-
-  }
+    usernameElement.textContent =
+        username;
 
 }
 
@@ -749,265 +866,305 @@ async function getCurrentUserData(user) {
 // ======================================================
 
 onAuthStateChanged(
-  auth,
-  async (user) => {
+    auth,
+    async (user) => {
 
-    if (user) {
+        if (user) {
 
-      setAppVisibility(true);
-
-      await updateLoggedInUsername(user);
+            setAppVisibility(true);
 
 
-      loadLocalData();
-
-      loadOperations();
-
-      loadHistory();
-
-      updateDashboard();
-
-      updateEarnings();
-
-      loadAdminOperations();
-
-      showSection("dashboard");
+            await updateLoggedInUsername(user);
 
 
-      // Load trial/subscription data
-
-      const userData =
-        await getCurrentUserData(user);
+            loadLocalData();
 
 
-      if (userData) {
+            // FIRESTORE HISTORY
+            await loadHistoryFromFirestore();
 
-        updateTrialBanner(userData);
 
-        updateTrialCard(userData);
+            loadOperations();
 
-      } else {
+            setDefaultDate();
 
-        hideTrialUI();
+            updateDashboard();
 
-      }
+            updateEarnings();
 
-    } else {
+            loadAdminOperations();
 
-      setAppVisibility(false);
 
-      hideTrialUI();
+            // IMPORTANT:
+            // Dashboard is the only page
+            // where Trial/Premium UI is shown.
+
+            showSection("dashboard");
+
+
+            const userData =
+                await getCurrentUserData(user);
+
+
+            if (userData) {
+
+                updateTrialUIForSection(
+                    "dashboard",
+                    userData
+                );
+
+            } else {
+
+                hideTrialUI();
+
+            }
+
+        } else {
+
+            setAppVisibility(false);
+
+            hideTrialUI();
+
+        }
 
     }
-
-  }
 );
 
 
 // ======================================================
-// SECTION NAVIGATION
+// NAVIGATION
 // ======================================================
 
 function showSection(sectionId) {
 
-  const sections =
-    document.querySelectorAll(".section");
+    const sections =
+        document.querySelectorAll(
+            ".section"
+        );
 
 
-  sections.forEach(
-    (section) => {
+    sections.forEach(
+        section => {
 
-      section.style.display = "none";
+            section.style.display =
+                "none";
 
-    }
-  );
-
-
-  const selected =
-    $(sectionId);
-
-
-  if (selected) {
-
-    selected.style.display =
-      "block";
-
-  }
-
-
-  // Bottom navigation active state
-
-  const navItems =
-    document.querySelectorAll(
-      ".bottom-nav button"
+        }
     );
 
 
-  navItems.forEach(
-    (button) => {
+    const selected =
+        $(sectionId);
 
-      button.classList.remove(
-        "active"
-      );
+
+    if (selected) {
+
+        selected.style.display =
+            "block";
 
     }
-  );
 
 
-  navItems.forEach(
-    (button) => {
+    // ==================================================
+    // NAV ACTIVE BUTTON
+    // ==================================================
 
-      const onclickValue =
-        button.getAttribute(
-          "onclick"
-        ) || "";
-
-
-      if (
-        onclickValue.includes(
-          `showSection('${sectionId}')`
-        ) ||
-        onclickValue.includes(
-          `showSection("${sectionId}")`
-        )
-      ) {
-
-        button.classList.add(
-          "active"
+    const navItems =
+        document.querySelectorAll(
+            ".bottom-nav button"
         );
 
-      }
+
+    navItems.forEach(
+        button => {
+
+            button.classList.remove(
+                "active"
+            );
+
+        }
+    );
+
+
+    navItems.forEach(
+        button => {
+
+            const onclickValue =
+                button.getAttribute(
+                    "onclick"
+                ) || "";
+
+
+            if (
+                onclickValue.includes(
+                    `showSection('${sectionId}')`
+                ) ||
+                onclickValue.includes(
+                    `showSection("${sectionId}")`
+                )
+            ) {
+
+                button.classList.add(
+                    "active"
+                );
+
+            }
+
+        }
+    );
+
+
+    // ==================================================
+    // TRIAL / PREMIUM UI
+    // ONLY DASHBOARD
+    // ==================================================
+
+    if (sectionId === "dashboard") {
+
+        refreshTrialUI();
+
+    } else {
+
+        // Hide Trial/Premium immediately
+        // on every other page.
+
+        hideTrialUI();
 
     }
-  );
 
 
-  // Update section data
+    // ==================================================
+    // SECTION ACTIONS
+    // ==================================================
 
-  if (sectionId === "dashboard") {
-    updateDashboard();
-  }
+    if (
+        sectionId === "addWork" ||
+        sectionId === "add-work"
+    ) {
 
+        setDefaultDate();
 
-  if (sectionId === "history") {
-    loadHistory();
-  }
-
-
-  if (sectionId === "earnings") {
-    updateEarnings();
-  }
+    }
 
 
-  if (sectionId === "admin") {
-    loadAdminOperations();
-  }
+    if (sectionId === "dashboard") {
+
+        updateDashboard();
+
+    }
+
+
+    if (sectionId === "history") {
+
+        loadHistory();
+
+    }
+
+
+    if (sectionId === "earnings") {
+
+        updateEarnings();
+
+    }
+
+
+    if (sectionId === "admin") {
+
+        loadAdminOperations();
+
+    }
 
 }
 
 
 // ======================================================
-// LOAD OPERATIONS INTO DROPDOWN
+// LOAD OPERATIONS
 // ======================================================
 
 function loadOperations() {
 
-  const operationSelect =
-    $("operationSelect");
+    const select =
+        $("operationSelect");
 
 
-  if (!operationSelect) {
+    if (!select)
+        return;
 
-    console.warn(
-      "operationSelect not found in HTML."
+
+    select.innerHTML =
+        `<option value="">Select Operation</option>`;
+
+
+    operations.forEach(
+        (operation, index) => {
+
+            const option =
+                document.createElement(
+                    "option"
+                );
+
+
+            option.value =
+                index;
+
+
+            option.textContent =
+                `${operation.name} - ₹${Number(
+                    operation.rate
+                ).toFixed(2)}`;
+
+
+            select.appendChild(
+                option
+            );
+
+        }
     );
 
-    return;
 
-  }
-
-
-  operationSelect.innerHTML =
-    `<option value="">Select Operation</option>`;
-
-
-  operations.forEach(
-    (operation, index) => {
-
-      const option =
-        document.createElement(
-          "option"
-        );
-
-
-      option.value = index;
-
-
-      option.textContent =
-        `${operation.name} - ₹${Number(
-          operation.rate
-        ).toFixed(2)}`;
-
-
-      operationSelect.appendChild(
-        option
-      );
-
-    }
-  );
-
-
-  updateRateDisplay();
+    updateRateDisplay();
 
 }
 
 
 // ======================================================
-// UPDATE RATE DISPLAY
+// RATE DISPLAY
 // ======================================================
 
 function updateRateDisplay() {
 
-  const operationSelect =
-    $("operationSelect");
+    const select =
+        $("operationSelect");
 
-  const rateDisplay =
-    $("rateDisplay");
-
-
-  if (
-    !operationSelect ||
-    !rateDisplay
-  ) {
-    return;
-  }
+    const display =
+        $("rateDisplay");
 
 
-  const selectedIndex =
-    operationSelect.value;
+    if (!select || !display)
+        return;
 
 
-  if (
-    selectedIndex === "" ||
-    !operations[selectedIndex]
-  ) {
-
-    rateDisplay.textContent =
-      "₹0.00";
-
-    return;
-
-  }
+    const index =
+        select.value;
 
 
-  const rate =
-    Number(
-      operations[selectedIndex].rate
-    );
+    if (
+        index === "" ||
+        !operations[index]
+    ) {
+
+        display.textContent =
+            "₹0.00";
+
+        return;
+
+    }
 
 
-  rateDisplay.textContent =
-    `₹${rate.toFixed(2)}`;
+    display.textContent =
+        `₹${Number(
+            operations[index].rate
+        ).toFixed(2)}`;
 
 }
 
@@ -1018,63 +1175,63 @@ function updateRateDisplay() {
 
 function calculatePreview() {
 
-  updateRateDisplay();
+    updateRateDisplay();
 
 
-  const operationSelect =
-    $("operationSelect");
+    const select =
+        $("operationSelect");
 
-  const quantityInput =
-    $("quantity");
+    const quantityInput =
+        $("quantity");
 
-  const preview =
-    $("previewEarning");
-
-
-  if (
-    !operationSelect ||
-    !quantityInput ||
-    !preview
-  ) {
-    return;
-  }
+    const preview =
+        $("previewEarning");
 
 
-  const selectedIndex =
-    operationSelect.value;
+    if (
+        !select ||
+        !quantityInput ||
+        !preview
+    )
+        return;
 
 
-  const quantity =
-    Number(quantityInput.value);
+    const index =
+        select.value;
 
 
-  if (
-    selectedIndex === "" ||
-    !operations[selectedIndex] ||
-    !quantity ||
-    quantity < 0
-  ) {
+    const quantity =
+        Number(
+            quantityInput.value
+        );
+
+
+    if (
+        index === "" ||
+        !operations[index] ||
+        quantity <= 0
+    ) {
+
+        preview.textContent =
+            "₹0.00";
+
+        return;
+
+    }
+
+
+    const rate =
+        Number(
+            operations[index].rate
+        );
+
+
+    const earning =
+        rate * quantity;
+
 
     preview.textContent =
-      "₹0.00";
-
-    return;
-
-  }
-
-
-  const rate =
-    Number(
-      operations[selectedIndex].rate
-    );
-
-
-  const earning =
-    rate * quantity;
-
-
-  preview.textContent =
-    `₹${earning.toFixed(2)}`;
+        `₹${earning.toFixed(2)}`;
 
 }
 
@@ -1083,65 +1240,68 @@ function calculatePreview() {
 // PHOTO PREVIEW
 // ======================================================
 
-const piecePhoto =
-  $("piecePhoto");
+function setupPhotoPreview() {
 
-const photoPreview =
-  $("photoPreview");
+    const piecePhoto =
+        $("piecePhoto");
 
-
-if (
-  piecePhoto &&
-  photoPreview
-) {
-
-  piecePhoto.addEventListener(
-    "change",
-    function () {
-
-      const file =
-        this.files?.[0];
+    const photoPreview =
+        $("photoPreview");
 
 
-      if (!file) {
-
-        photoPreview.innerHTML =
-          "";
-
+    if (
+        !piecePhoto ||
+        !photoPreview
+    )
         return;
 
-      }
+
+    piecePhoto.addEventListener(
+        "change",
+        function () {
+
+            const file =
+                this.files?.[0];
 
 
-      const reader =
-        new FileReader();
+            if (!file) {
+
+                photoPreview.innerHTML =
+                    "";
+
+                return;
+
+            }
 
 
-      reader.onload =
-        function (event) {
-
-          photoPreview.innerHTML = `
-            <img
-              src="${event.target.result}"
-              alt="Piece Photo"
-              style="
-                max-width:180px;
-                max-height:180px;
-                border-radius:10px;
-                object-fit:cover;
-              "
-            >
-          `;
-
-        };
+            const reader =
+                new FileReader();
 
 
-      reader.readAsDataURL(
-        file
-      );
+            reader.onload =
+                function (event) {
 
-    }
-  );
+                    photoPreview.innerHTML =
+                        `
+                        <img
+                            src="${event.target.result}"
+                            alt="Piece Photo"
+                            style="
+                                max-width:180px;
+                                max-height:180px;
+                                border-radius:10px;
+                                object-fit:cover;
+                            "
+                        >
+                        `;
+
+                };
+
+
+            reader.readAsDataURL(file);
+
+        }
+    );
 
 }
 
@@ -1150,261 +1310,623 @@ if (
 // SAVE WORK
 // ======================================================
 
-function saveWork() {
+async function saveWork() {
 
-  const workDate =
-    $("workDate");
-
-  const operationSelect =
-    $("operationSelect");
-
-  const sizeSelect =
-    $("sizeSelect");
-
-  const cutSelect =
-    $("cutSelect");
-
-  const quantityInput =
-    $("quantity");
-
-  const piecePhoto =
-    $("piecePhoto");
+    const user =
+        auth.currentUser;
 
 
-  if (
-    !workDate ||
-    !operationSelect ||
-    !sizeSelect ||
-    !cutSelect ||
-    !quantityInput
-  ) {
+    if (!user) {
 
-    alert(
-      "Work form fields not found."
-    );
-
-    return;
-
-  }
-
-
-  const date =
-    workDate.value;
-
-  const operationIndex =
-    operationSelect.value;
-
-  const size =
-    sizeSelect.value;
-
-  const cut =
-    cutSelect.value;
-
-  const quantity =
-    Number(quantityInput.value);
-
-
-  if (!date) {
-
-    alert(
-      "Please select date."
-    );
-
-    return;
-
-  }
-
-
-  if (
-    operationIndex === "" ||
-    !operations[operationIndex]
-  ) {
-
-    alert(
-      "Please select operation."
-    );
-
-    return;
-
-  }
-
-
-  if (!size) {
-
-    alert(
-      "Please select size."
-    );
-
-    return;
-
-  }
-
-
-  if (!cut) {
-
-    alert(
-      "Please select CUT."
-    );
-
-    return;
-
-  }
-
-
-  if (
-    !quantity ||
-    quantity <= 0
-  ) {
-
-    alert(
-      "Please enter valid quantity."
-    );
-
-    return;
-
-  }
-
-
-  const operation =
-    operations[operationIndex];
-
-
-  const rate =
-    Number(operation.rate);
-
-
-  const earning =
-    rate * quantity;
-
-
-  let photoData = "";
-
-
-  if (
-    piecePhoto &&
-    piecePhoto.files &&
-    piecePhoto.files[0]
-  ) {
-
-    const file =
-      piecePhoto.files[0];
-
-
-    const reader =
-      new FileReader();
-
-
-    reader.onload =
-      function (event) {
-
-        addWorkEntry(
-          date,
-          operation,
-          size,
-          cut,
-          quantity,
-          earning,
-          event.target.result
+        alert(
+            "Please login first."
         );
 
-      };
+        return;
+
+    }
 
 
-    reader.readAsDataURL(
-      file
-    );
+    const workDate =
+        $("workDate");
 
-    return;
+    const operationSelect =
+        $("operationSelect");
 
-  }
+    const sizeSelect =
+        $("sizeSelect");
+
+    const cutSelect =
+        $("cutSelect");
+
+    const quantityInput =
+        $("quantity");
+
+    const piecePhoto =
+        $("piecePhoto");
 
 
-  addWorkEntry(
+    if (
+        !workDate ||
+        !operationSelect ||
+        !sizeSelect ||
+        !cutSelect ||
+        !quantityInput
+    ) {
+
+        alert(
+            "Work form fields not found."
+        );
+
+        return;
+
+    }
+
+
+    const date =
+        workDate.value;
+
+    const operationIndex =
+        operationSelect.value;
+
+    const size =
+        sizeSelect.value;
+
+    const cut =
+        cutSelect.value;
+
+    const quantity =
+        Number(
+            quantityInput.value
+        );
+
+
+    if (!date) {
+
+        alert(
+            "Please select date."
+        );
+
+        return;
+
+    }
+
+
+    if (
+        operationIndex === "" ||
+        !operations[operationIndex]
+    ) {
+
+        alert(
+            "Please select operation."
+        );
+
+        return;
+
+    }
+
+
+    if (!size) {
+
+        alert(
+            "Please select size."
+        );
+
+        return;
+
+    }
+
+
+    if (!cut) {
+
+        alert(
+            "Please select CUT."
+        );
+
+        return;
+
+    }
+
+
+    if (
+        !quantity ||
+        quantity <= 0
+    ) {
+
+        alert(
+            "Please enter valid quantity."
+        );
+
+        return;
+
+    }
+
+
+    const operation =
+        operations[operationIndex];
+
+
+    const rate =
+        Number(
+            operation.rate
+        );
+
+
+    const earning =
+        rate * quantity;
+
+
+    // ==================================================
+    // PHOTO HANDLING
+    // ==================================================
+
+    if (
+        piecePhoto &&
+        piecePhoto.files &&
+        piecePhoto.files[0]
+    ) {
+
+        const file =
+            piecePhoto.files[0];
+
+
+        const reader =
+            new FileReader();
+
+
+        reader.onload =
+            async function (event) {
+
+                await addWorkEntry(
+                    date,
+                    operation,
+                    size,
+                    cut,
+                    quantity,
+                    earning,
+                    event.target.result
+                );
+
+            };
+
+
+        reader.readAsDataURL(file);
+
+    } else {
+
+        await addWorkEntry(
+            date,
+            operation,
+            size,
+            cut,
+            quantity,
+            earning,
+            ""
+        );
+
+    }
+
+}
+
+
+// ======================================================
+// ADD WORK ENTRY - FIRESTORE
+// ======================================================
+
+async function addWorkEntry(
     date,
     operation,
     size,
     cut,
     quantity,
     earning,
-    photoData
-  );
+    photo
+) {
+
+    const user =
+        auth.currentUser;
+
+
+    if (!user) {
+
+        alert(
+            "Please login first."
+        );
+
+        return;
+
+    }
+
+
+    try {
+
+        console.log(
+            "Saving work to Firestore..."
+        );
+
+        console.log(
+            "User UID:",
+            user.uid
+        );
+
+
+        // ==================================================
+        // WORK DATA
+        // ==================================================
+
+        const workData = {
+
+            date:
+                date,
+
+            operation:
+                operation.name,
+
+            rate:
+                Number(
+                    operation.rate
+                ),
+
+            size:
+                size,
+
+            cut:
+                cut,
+
+            quantity:
+                Number(
+                    quantity
+                ),
+
+            earning:
+                Number(
+                    earning
+                ),
+
+            photo:
+                photo || "",
+
+            createdAt:
+                serverTimestamp()
+
+        };
+
+
+        // ==================================================
+        // FIRESTORE PATH
+        // users
+        //   └── USER UID
+        //       └── workHistory
+        // ==================================================
+
+        const workCollection =
+            collection(
+                db,
+                "users",
+                user.uid,
+                "workHistory"
+            );
+
+
+        // ==================================================
+        // SAVE
+        // ==================================================
+
+        const workRef =
+            await addDoc(
+                workCollection,
+                workData
+            );
+
+
+        console.log(
+            "WORK SAVED SUCCESSFULLY:",
+            workRef.id
+        );
+
+
+        // ==================================================
+        // LOCAL COPY
+        // ==================================================
+
+        workHistory.push({
+
+            id:
+                workRef.id,
+
+            date:
+                date,
+
+            operation:
+                operation.name,
+
+            rate:
+                Number(
+                    operation.rate
+                ),
+
+            size:
+                size,
+
+            cut:
+                cut,
+
+            quantity:
+                Number(
+                    quantity
+                ),
+
+            earning:
+                Number(
+                    earning
+                ),
+
+            photo:
+                photo || "",
+
+            createdAt:
+                new Date().toISOString()
+
+        });
+
+
+        saveLocalData();
+
+
+        alert(
+            `Work saved successfully!\nEarning: ₹${Number(
+                earning
+            ).toFixed(2)}`
+        );
+
+
+        resetWorkForm();
+
+
+        await loadHistoryFromFirestore();
+
+
+        updateDashboard();
+
+        updateEarnings();
+
+
+        showSection(
+            "dashboard"
+        );
+
+
+    } catch (error) {
+
+        console.error(
+            "================================"
+        );
+
+        console.error(
+            "FIRESTORE SAVE ERROR"
+        );
+
+        console.error(
+            "Error code:",
+            error.code
+        );
+
+        console.error(
+            "Error message:",
+            error.message
+        );
+
+        console.error(
+            "Full error:",
+            error
+        );
+
+        console.error(
+            "================================"
+        );
+
+
+        if (
+            error.code ===
+            "permission-denied"
+        ) {
+
+            alert(
+                "Firestore permission denied.\n\nFirestore Rules me users/{userId}/workHistory ka write allow karo."
+            );
+
+        } else if (
+            error.code ===
+            "unavailable"
+        ) {
+
+            alert(
+                "Firestore unavailable.\nInternet connection check karo."
+            );
+
+        } else {
+
+            alert(
+                "Work save nahi hua.\n\nError: " +
+                error.message
+            );
+
+        }
+
+    }
 
 }
 
 
 // ======================================================
-// ADD WORK ENTRY
+// LOAD HISTORY FROM FIRESTORE
 // ======================================================
 
-function addWorkEntry(
-  date,
-  operation,
-  size,
-  cut,
-  quantity,
-  earning,
-  photo
-) {
+async function loadHistoryFromFirestore() {
 
-  const entry = {
-
-    id:
-      Date.now().toString(),
-
-    date:
-      date,
-
-    operation:
-      operation.name,
-
-    rate:
-      Number(operation.rate),
-
-    size:
-      size,
-
-    cut:
-      cut,
-
-    quantity:
-      Number(quantity),
-
-    earning:
-      Number(earning),
-
-    photo:
-      photo || "",
-
-    createdAt:
-      new Date().toISOString()
-
-  };
+    const user =
+        auth.currentUser;
 
 
-  workHistory.push(
-    entry
-  );
+    if (!user)
+        return;
 
 
-  saveLocalData();
+    try {
+
+        const historyRef =
+            collection(
+                db,
+                "users",
+                user.uid,
+                "workHistory"
+            );
 
 
-  alert(
-    `Work saved successfully!\nEarning: ₹${earning.toFixed(2)}`
-  );
+        let snapshot;
 
 
-  resetWorkForm();
+        try {
 
-  updateDashboard();
+            const historyQuery =
+                query(
+                    historyRef,
+                    orderBy(
+                        "createdAt",
+                        "desc"
+                    )
+                );
 
-  updateEarnings();
 
-  loadHistory();
+            snapshot =
+                await getDocs(
+                    historyQuery
+                );
 
-  showSection(
-    "dashboard"
-  );
+        } catch (queryError) {
+
+            console.warn(
+                "Ordered query failed. Loading without order.",
+                queryError
+            );
+
+
+            snapshot =
+                await getDocs(
+                    historyRef
+                );
+
+        }
+
+
+        workHistory = [];
+
+
+        snapshot.forEach(
+            documentSnapshot => {
+
+                const data =
+                    documentSnapshot.data();
+
+
+                let createdAt =
+                    new Date().toISOString();
+
+
+                if (
+                    data.createdAt &&
+                    typeof data.createdAt.toDate ===
+                    "function"
+                ) {
+
+                    createdAt =
+                        data.createdAt
+                            .toDate()
+                            .toISOString();
+
+                }
+
+
+                workHistory.push({
+
+                    id:
+                        documentSnapshot.id,
+
+                    date:
+                        data.date || "",
+
+                    operation:
+                        data.operation || "",
+
+                    rate:
+                        Number(
+                            data.rate || 0
+                        ),
+
+                    size:
+                        data.size || "",
+
+                    cut:
+                        data.cut || "",
+
+                    quantity:
+                        Number(
+                            data.quantity || 0
+                        ),
+
+                    earning:
+                        Number(
+                            data.earning || 0
+                        ),
+
+                    photo:
+                        data.photo || "",
+
+                    createdAt:
+                        createdAt
+
+                });
+
+            }
+        );
+
+
+        saveLocalData();
+
+
+        loadHistory();
+
+        updateDashboard();
+
+        updateEarnings();
+
+
+        console.log(
+            "Firestore history loaded:",
+            workHistory.length
+        );
+
+
+    } catch (error) {
+
+        console.error(
+            "Load Firestore history error:",
+            error
+        );
+
+
+        if (
+            error.code ===
+            "permission-denied"
+        ) {
+
+            console.error(
+                "Firestore READ permission denied."
+            );
+
+        }
+
+    }
 
 }
 
@@ -1415,204 +1937,253 @@ function addWorkEntry(
 
 function resetWorkForm() {
 
-  const workDate =
-    $("workDate");
+    const workDate =
+        $("workDate");
 
-  const operationSelect =
-    $("operationSelect");
+    const operationSelect =
+        $("operationSelect");
 
-  const sizeSelect =
-    $("sizeSelect");
+    const sizeSelect =
+        $("sizeSelect");
 
-  const cutSelect =
-    $("cutSelect");
+    const cutSelect =
+        $("cutSelect");
 
-  const quantity =
-    $("quantity");
+    const quantity =
+        $("quantity");
 
-  const piecePhoto =
-    $("piecePhoto");
+    const piecePhoto =
+        $("piecePhoto");
 
-  const photoPreview =
-    $("photoPreview");
+    const photoPreview =
+        $("photoPreview");
 
-  const previewEarning =
-    $("previewEarning");
+    const previewEarning =
+        $("previewEarning");
 
-  const rateDisplay =
-    $("rateDisplay");
-
-
-  if (workDate) {
-
-    workDate.value =
-      getTodayDate();
-
-  }
+    const rateDisplay =
+        $("rateDisplay");
 
 
-  if (operationSelect) {
-    operationSelect.value = "";
-  }
+    if (workDate)
+
+        workDate.value =
+            getTodayDate();
 
 
-  if (sizeSelect) {
-    sizeSelect.value = "";
-  }
+    if (operationSelect)
+
+        operationSelect.value =
+            "";
 
 
-  if (cutSelect) {
-    cutSelect.value = "";
-  }
+    if (sizeSelect)
+
+        sizeSelect.value =
+            "";
 
 
-  if (quantity) {
-    quantity.value = "";
-  }
+    if (cutSelect)
+
+        cutSelect.value =
+            "";
 
 
-  if (piecePhoto) {
-    piecePhoto.value = "";
-  }
+    if (quantity)
+
+        quantity.value =
+            "";
 
 
-  if (photoPreview) {
-    photoPreview.innerHTML = "";
-  }
+    if (piecePhoto)
+
+        piecePhoto.value =
+            "";
 
 
-  if (previewEarning) {
-    previewEarning.textContent =
-      "₹0.00";
-  }
+    if (photoPreview)
+
+        photoPreview.innerHTML =
+            "";
 
 
-  if (rateDisplay) {
-    rateDisplay.textContent =
-      "₹0.00";
-  }
+    if (previewEarning)
+
+        previewEarning.textContent =
+            "₹0.00";
+
+
+    if (rateDisplay)
+
+        rateDisplay.textContent =
+            "₹0.00";
 
 }
 
 
 // ======================================================
-// LOAD HISTORY
+// LOAD HISTORY UI
 // ======================================================
 
 function loadHistory() {
 
-  const historyList =
-    $("historyList");
+    const historyList =
+        $("historyList");
 
 
-  if (!historyList) return;
+    if (!historyList)
+        return;
 
 
-  historyList.innerHTML =
-    "";
+    historyList.innerHTML =
+        "";
 
 
-  if (
-    workHistory.length === 0
-  ) {
+    if (
+        workHistory.length === 0
+    ) {
 
-    historyList.innerHTML = `
-      <div class="empty-state">
-        No work history found.
-      </div>
-    `;
+        historyList.innerHTML =
+            `
+            <div class="empty-state">
+                No work history found.
+            </div>
+            `;
 
-    return;
+        return;
 
-  }
-
-
-  const sortedHistory =
-    [...workHistory]
-      .sort(
-        (a, b) =>
-          new Date(b.createdAt) -
-          new Date(a.createdAt)
-      );
+    }
 
 
-  sortedHistory.forEach(
-    (entry) => {
+    const sortedHistory =
+        [...workHistory].sort(
+            (a, b) => {
 
-      const row =
-        document.createElement(
-          "div"
+                const dateA =
+                    new Date(
+                        a.createdAt || 0
+                    ).getTime();
+
+
+                const dateB =
+                    new Date(
+                        b.createdAt || 0
+                    ).getTime();
+
+
+                return dateB - dateA;
+
+            }
         );
 
 
-      row.className =
-        "history-item";
+    sortedHistory.forEach(
+        entry => {
+
+            const row =
+                document.createElement(
+                    "div"
+                );
 
 
-      row.innerHTML = `
-        <div>
-          <strong>
-            ${escapeHTML(entry.operation)}
-          </strong>
-
-          <div>
-            Date: ${escapeHTML(entry.date)}
-          </div>
-
-          <div>
-            Size: ${escapeHTML(entry.size)}
-            |
-            ${escapeHTML(entry.cut)}
-          </div>
-
-          <div>
-            Quantity: ${entry.quantity}
-          </div>
-
-          <div>
-            Rate: ₹${Number(
-              entry.rate
-            ).toFixed(2)}
-          </div>
-        </div>
-
-        <div>
-          <strong>
-            ₹${Number(
-              entry.earning
-            ).toFixed(2)}
-          </strong>
-
-          ${
-            entry.photo
-              ? `
-                <br>
-                <button
-                  onclick="viewPhoto('${entry.id}')"
-                >
-                  View Photo
-                </button>
-              `
-              : ""
-          }
-
-          <br>
-
-          <button
-            onclick="deleteWork('${entry.id}')"
-          >
-            Delete
-          </button>
-        </div>
-      `;
+            row.className =
+                "history-item";
 
 
-      historyList.appendChild(
-        row
-      );
+            const safeId =
+                encodeURIComponent(
+                    entry.id
+                );
 
-    }
-  );
+
+            row.innerHTML =
+                `
+                <div>
+
+                    <strong>
+                        ${escapeHTML(
+                            entry.operation
+                        )}
+                    </strong>
+
+                    <div>
+                        Date:
+                        ${escapeHTML(
+                            formatDisplayDate(
+                                entry.date
+                            )
+                        )}
+                    </div>
+
+                    <div>
+                        Size:
+                        ${escapeHTML(
+                            entry.size
+                        )}
+                        |
+                        ${escapeHTML(
+                            entry.cut
+                        )}
+                    </div>
+
+                    <div>
+                        Quantity:
+                        ${Number(
+                            entry.quantity
+                        )}
+                    </div>
+
+                    <div>
+                        Rate:
+                        ₹${Number(
+                            entry.rate
+                        ).toFixed(2)}
+                    </div>
+
+                </div>
+
+                <div>
+
+                    <strong>
+                        ₹${Number(
+                            entry.earning
+                        ).toFixed(2)}
+                    </strong>
+
+                    ${
+                        entry.photo
+                            ?
+                            `
+                            <br>
+
+                            <button
+                                onclick="viewPhoto(decodeURIComponent('${safeId}'))"
+                            >
+                                View Photo
+                            </button>
+                            `
+                            :
+                            ""
+                    }
+
+                    <br>
+
+                    <button
+                        onclick="deleteWork(decodeURIComponent('${safeId}'))"
+                    >
+                        Delete
+                    </button>
+
+                </div>
+                `;
+
+
+            historyList.appendChild(
+                row
+            );
+
+        }
+    );
 
 }
 
@@ -1623,17 +2194,17 @@ function loadHistory() {
 
 function escapeHTML(value) {
 
-  const div =
-    document.createElement(
-      "div"
-    );
+    const div =
+        document.createElement(
+            "div"
+        );
 
 
-  div.textContent =
-    value ?? "";
+    div.textContent =
+        value ?? "";
 
 
-  return div.innerHTML;
+    return div.innerHTML;
 
 }
 
@@ -1644,126 +2215,191 @@ function escapeHTML(value) {
 
 function viewPhoto(id) {
 
-  const entry =
-    workHistory.find(
-      item =>
-        item.id === id
+    const entry =
+        workHistory.find(
+            item =>
+                item.id === id
+        );
+
+
+    if (
+        !entry ||
+        !entry.photo
+    ) {
+
+        alert(
+            "Photo not found."
+        );
+
+        return;
+
+    }
+
+
+    const photoWindow =
+        window.open(
+            "",
+            "_blank"
+        );
+
+
+    if (!photoWindow) {
+
+        alert(
+            "Please allow popups to view photo."
+        );
+
+        return;
+
+    }
+
+
+    photoWindow.document.write(
+        `
+        <!DOCTYPE html>
+
+        <html>
+
+        <head>
+
+            <title>
+                Piece Photo
+            </title>
+
+            <meta
+                name="viewport"
+                content="width=device-width, initial-scale=1"
+            >
+
+        </head>
+
+        <body
+            style="
+                margin:0;
+                padding:20px;
+                background:#111;
+                display:flex;
+                justify-content:center;
+                align-items:center;
+                min-height:100vh;
+            "
+        >
+
+            <img
+                src="${entry.photo}"
+                style="
+                    max-width:95%;
+                    max-height:95vh;
+                    object-fit:contain;
+                    border-radius:10px;
+                "
+            >
+
+        </body>
+
+        </html>
+        `
     );
 
 
-  if (
-    !entry ||
-    !entry.photo
-  ) {
-
-    alert(
-      "Photo not found."
-    );
-
-    return;
-
-  }
-
-
-  const photoWindow =
-    window.open(
-      "",
-      "_blank"
-    );
-
-
-  if (!photoWindow) {
-
-    alert(
-      "Please allow popups to view photo."
-    );
-
-    return;
-
-  }
-
-
-  photoWindow.document.write(`
-    <!DOCTYPE html>
-
-    <html>
-
-    <head>
-
-      <title>
-        Piece Photo
-      </title>
-
-      <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1"
-      >
-
-    </head>
-
-    <body
-      style="
-        margin:0;
-        padding:20px;
-        background:#111;
-        display:flex;
-        justify-content:center;
-        align-items:center;
-        min-height:100vh;
-      "
-    >
-
-      <img
-        src="${entry.photo}"
-        style="
-          max-width:95%;
-          max-height:95vh;
-          object-fit:contain;
-          border-radius:10px;
-        "
-      >
-
-    </body>
-
-    </html>
-  `);
-
-
-  photoWindow.document.close();
+    photoWindow.document.close();
 
 }
 
 
 // ======================================================
-// DELETE WORK
+// DELETE WORK - FIRESTORE
 // ======================================================
 
-function deleteWork(id) {
+async function deleteWork(id) {
 
-  const confirmDelete =
-    confirm(
-      "Delete this work entry?"
-    );
+    const user =
+        auth.currentUser;
 
 
-  if (!confirmDelete) return;
+    if (!user) {
+
+        alert(
+            "Please login first."
+        );
+
+        return;
+
+    }
 
 
-  workHistory =
-    workHistory.filter(
-      entry =>
-        entry.id !== id
-    );
+    const confirmDelete =
+        confirm(
+            "Delete this work entry?"
+        );
 
 
-  saveLocalData();
+    if (!confirmDelete)
+        return;
 
 
-  loadHistory();
+    try {
 
-  updateDashboard();
+        await deleteDoc(
+            doc(
+                db,
+                "users",
+                user.uid,
+                "workHistory",
+                id
+            )
+        );
 
-  updateEarnings();
+
+        workHistory =
+            workHistory.filter(
+                entry =>
+                    entry.id !== id
+            );
+
+
+        saveLocalData();
+
+
+        loadHistory();
+
+        updateDashboard();
+
+        updateEarnings();
+
+
+        alert(
+            "Work deleted successfully."
+        );
+
+
+    } catch (error) {
+
+        console.error(
+            "Delete work error:",
+            error
+        );
+
+
+        if (
+            error.code ===
+            "permission-denied"
+        ) {
+
+            alert(
+                "Delete permission denied.\nFirestore Rules check karo."
+            );
+
+        } else {
+
+            alert(
+                "Work delete nahi hua.\n" +
+                error.message
+            );
+
+        }
+
+    }
 
 }
 
@@ -1774,9 +2410,59 @@ function deleteWork(id) {
 
 function getTodayDate() {
 
-  return new Date()
-    .toISOString()
-    .split("T")[0];
+    const now =
+        new Date();
+
+
+    const year =
+        now.getFullYear();
+
+
+    const month =
+        String(
+            now.getMonth() + 1
+        ).padStart(
+            2,
+            "0"
+        );
+
+
+    const day =
+        String(
+            now.getDate()
+        ).padStart(
+            2,
+            "0"
+        );
+
+
+    return `${year}-${month}-${day}`;
+
+}
+
+
+// ======================================================
+// DISPLAY DATE
+// DD/MM/YYYY
+// ======================================================
+
+function formatDisplayDate(
+    dateString
+) {
+
+    if (!dateString)
+        return "";
+
+
+    const parts =
+        dateString.split("-");
+
+
+    if (parts.length !== 3)
+        return dateString;
+
+
+    return `${parts[2]}/${parts[1]}/${parts[0]}`;
 
 }
 
@@ -1787,14 +2473,14 @@ function getTodayDate() {
 
 function getTodayEntries() {
 
-  const today =
-    getTodayDate();
+    const today =
+        getTodayDate();
 
 
-  return workHistory.filter(
-    entry =>
-      entry.date === today
-  );
+    return workHistory.filter(
+        entry =>
+            entry.date === today
+    );
 
 }
 
@@ -1805,165 +2491,160 @@ function getTodayEntries() {
 
 function updateDashboard() {
 
-  const todayEarning =
-    $("todayEarning");
+    const todayEarning =
+        $("todayEarning");
 
-  const todayPieces =
-    $("todayPieces");
+    const todayPieces =
+        $("todayPieces");
 
-  const totalEntries =
-    $("totalEntries");
+    const totalEntries =
+        $("totalEntries");
 
-  const todayWork =
-    $("todayWork");
-
-
-  const todayEntries =
-    getTodayEntries();
+    const todayWork =
+        $("todayWork");
 
 
-  const earning =
-    todayEntries.reduce(
-      (total, entry) => {
+    const todayEntries =
+        getTodayEntries();
 
-        return (
-          total +
-          Number(
-            entry.earning || 0
-          )
+
+    const earning =
+        todayEntries.reduce(
+            (total, entry) =>
+                total +
+                Number(
+                    entry.earning || 0
+                ),
+            0
         );
 
-      },
-      0
-    );
 
-
-  const pieces =
-    todayEntries.reduce(
-      (total, entry) => {
-
-        return (
-          total +
-          Number(
-            entry.quantity || 0
-          )
+    const pieces =
+        todayEntries.reduce(
+            (total, entry) =>
+                total +
+                Number(
+                    entry.quantity || 0
+                ),
+            0
         );
 
-      },
-      0
-    );
 
+    if (todayEarning) {
 
-  const entriesCount =
-    todayEntries.length;
-
-
-  if (todayEarning) {
-
-    todayEarning.textContent =
-      `₹${earning.toFixed(2)}`;
-
-  }
-
-
-  if (todayPieces) {
-
-    todayPieces.textContent =
-      pieces;
-
-  }
-
-
-  if (totalEntries) {
-
-    totalEntries.textContent =
-      entriesCount;
-
-  }
-
-
-  if (todayWork) {
-
-    todayWork.innerHTML =
-      "";
-
-
-    if (
-      todayEntries.length === 0
-    ) {
-
-      todayWork.innerHTML = `
-        <div class="empty-state">
-          No work added today.
-        </div>
-      `;
-
-    } else {
-
-      todayEntries
-        .slice()
-        .reverse()
-        .forEach(
-          (entry) => {
-
-            const div =
-              document.createElement(
-                "div"
-              );
-
-
-            div.className =
-              "today-work-item";
-
-
-            div.innerHTML = `
-              <div>
-
-                <strong>
-                  ${escapeHTML(
-                    entry.operation
-                  )}
-                </strong>
-
-                <div>
-                  ${escapeHTML(
-                    entry.size
-                  )}
-
-                  •
-
-                  ${escapeHTML(
-                    entry.cut
-                  )}
-                </div>
-
-                <div>
-                  Qty:
-                  ${Number(
-                    entry.quantity
-                  )}
-                </div>
-
-              </div>
-
-              <strong>
-                ₹${Number(
-                  entry.earning || 0
-                ).toFixed(2)}
-              </strong>
-            `;
-
-
-            todayWork.appendChild(
-              div
-            );
-
-          }
-        );
+        todayEarning.textContent =
+            `₹${earning.toFixed(2)}`;
 
     }
 
-  }
+
+    if (todayPieces) {
+
+        todayPieces.textContent =
+            pieces;
+
+    }
+
+
+    if (totalEntries) {
+
+        totalEntries.textContent =
+            todayEntries.length;
+
+    }
+
+
+    if (!todayWork)
+        return;
+
+
+    todayWork.innerHTML =
+        "";
+
+
+    if (
+        todayEntries.length === 0
+    ) {
+
+        todayWork.innerHTML =
+            `
+            <div class="empty-state">
+                No work added today.
+            </div>
+            `;
+
+        return;
+
+    }
+
+
+    [...todayEntries]
+        .reverse()
+        .forEach(
+            entry => {
+
+                const div =
+                    document.createElement(
+                        "div"
+                    );
+
+
+                div.className =
+                    "today-work-item";
+
+
+                div.innerHTML =
+                    `
+                    <div>
+
+                        <strong>
+                            ${escapeHTML(
+                                entry.operation
+                            )}
+                        </strong>
+
+                        <div>
+                            Date:
+                            ${escapeHTML(
+                                formatDisplayDate(
+                                    entry.date
+                                )
+                            )}
+                        </div>
+
+                        <div>
+                            ${escapeHTML(
+                                entry.size
+                            )}
+                            •
+                            ${escapeHTML(
+                                entry.cut
+                            )}
+                        </div>
+
+                        <div>
+                            Qty:
+                            ${Number(
+                                entry.quantity
+                            )}
+                        </div>
+
+                    </div>
+
+                    <strong>
+                        ₹${Number(
+                            entry.earning || 0
+                        ).toFixed(2)}
+                    </strong>
+                    `;
+
+
+                todayWork.appendChild(
+                    div
+                );
+
+            }
+        );
 
 }
 
@@ -1974,1169 +2655,1114 @@ function updateDashboard() {
 
 function updateEarnings() {
 
-  const lifetimeEarning =
-    $("lifetimeEarning");
+    const lifetimeEarning =
+        $("lifetimeEarning");
 
-  const lifetimePieces =
-    $("lifetimePieces");
+    const lifetimePieces =
+        $("lifetimePieces");
 
-  const lifetimeEntries =
-    $("lifetimeEntries");
+    const lifetimeEntries =
+        $("lifetimeEntries");
 
-  const dateWiseEarnings =
-    $("dateWiseEarnings");
-
-
-  const totalEarning =
-    workHistory.reduce(
-      (total, entry) =>
-        total +
-        Number(
-          entry.earning || 0
-        ),
-      0
-    );
+    const dateWiseEarnings =
+        $("dateWiseEarnings");
 
 
-  const totalPieces =
-    workHistory.reduce(
-      (total, entry) =>
-        total +
-        Number(
-          entry.quantity || 0
-        ),
-      0
-    );
-
-
-  if (lifetimeEarning) {
-
-    lifetimeEarning.textContent =
-      `₹${totalEarning.toFixed(2)}`;
-
-  }
-
-
-  if (lifetimePieces) {
-
-    lifetimePieces.textContent =
-      totalPieces;
-
-  }
-
-
-  if (lifetimeEntries) {
-
-    lifetimeEntries.textContent =
-      workHistory.length;
-
-  }
-
-
-  if (!dateWiseEarnings) return;
-
-
-  dateWiseEarnings.innerHTML =
-    "";
-
-
-  if (
-    workHistory.length === 0
-  ) {
-
-    dateWiseEarnings.innerHTML = `
-      <div class="empty-state">
-        No earnings yet.
-      </div>
-    `;
-
-    return;
-
-  }
-
-
-  const dateTotals = {};
-
-
-  workHistory.forEach(
-    (entry) => {
-
-      if (!dateTotals[entry.date]) {
-
-        dateTotals[entry.date] = {
-          earning: 0,
-          pieces: 0,
-          entries: 0
-        };
-
-      }
-
-
-      dateTotals[entry.date].earning +=
-        Number(
-          entry.earning || 0
+    const totalEarning =
+        workHistory.reduce(
+            (total, entry) =>
+                total +
+                Number(
+                    entry.earning || 0
+                ),
+            0
         );
 
 
-      dateTotals[entry.date].pieces +=
-        Number(
-          entry.quantity || 0
+    const totalPieces =
+        workHistory.reduce(
+            (total, entry) =>
+                total +
+                Number(
+                    entry.quantity || 0
+                ),
+            0
         );
 
 
-      dateTotals[entry.date].entries +=
-        1;
+    if (lifetimeEarning) {
+
+        lifetimeEarning.textContent =
+            `₹${totalEarning.toFixed(2)}`;
 
     }
-  );
 
 
-  Object.keys(dateTotals)
-    .sort()
-    .reverse()
-    .forEach(
-      (date) => {
+    if (lifetimePieces) {
 
-        const data =
-          dateTotals[date];
+        lifetimePieces.textContent =
+            totalPieces;
+
+    }
 
 
-        const row =
-          document.createElement(
-            "div"
-          );
+    if (lifetimeEntries) {
+
+        lifetimeEntries.textContent =
+            workHistory.length;
+
+    }
 
 
-        row.className =
-          "date-earning-card";
+    if (!dateWiseEarnings)
+        return;
 
 
-        row.innerHTML = `
-          <div class="date-earning-info">
-
-            <h4>
-              ${escapeHTML(date)}
-            </h4>
-
-            <p>
-              ${data.pieces}
-              pieces •
-              ${data.entries}
-              entries
-            </p>
-
-          </div>
-
-          <div class="date-earning-amount">
-            ₹${data.earning.toFixed(2)}
-          </div>
-        `;
+    dateWiseEarnings.innerHTML =
+        "";
 
 
-        dateWiseEarnings.appendChild(
-          row
-        );
+    if (
+        workHistory.length === 0
+    ) {
 
-      }
+        dateWiseEarnings.innerHTML =
+            `
+            <div class="empty-state">
+                No earnings yet.
+            </div>
+            `;
+
+        return;
+
+    }
+
+
+    const dateTotals = {};
+
+
+    workHistory.forEach(
+        entry => {
+
+            if (
+                !dateTotals[
+                    entry.date
+                ]
+            ) {
+
+                dateTotals[
+                    entry.date
+                ] = {
+
+                    earning: 0,
+
+                    pieces: 0,
+
+                    entries: 0
+
+                };
+
+            }
+
+
+            dateTotals[
+                entry.date
+            ].earning +=
+                Number(
+                    entry.earning || 0
+                );
+
+
+            dateTotals[
+                entry.date
+            ].pieces +=
+                Number(
+                    entry.quantity || 0
+                );
+
+
+            dateTotals[
+                entry.date
+            ].entries += 1;
+
+        }
     );
+
+
+    Object.keys(dateTotals)
+        .sort()
+        .reverse()
+        .forEach(
+            date => {
+
+                const data =
+                    dateTotals[date];
+
+
+                const row =
+                    document.createElement(
+                        "div"
+                    );
+
+
+                row.className =
+                    "date-earning-card";
+
+
+                row.innerHTML =
+                    `
+                    <div class="date-earning-info">
+
+                        <h4>
+                            ${escapeHTML(
+                                formatDisplayDate(
+                                    date
+                                )
+                            )}
+                        </h4>
+
+                        <p>
+                            ${data.pieces}
+                            pieces •
+                            ${data.entries}
+                            entries
+                        </p>
+
+                    </div>
+
+                    <div class="date-earning-amount">
+
+                        ₹${data.earning.toFixed(2)}
+
+                    </div>
+                    `;
+
+
+                dateWiseEarnings.appendChild(
+                    row
+                );
+
+            }
+        );
 
 }
 
 
 // ======================================================
-// ADMIN - LOAD OPERATIONS
+// ADMIN OPERATIONS
 // ======================================================
 
 function loadAdminOperations() {
 
-  const operationList =
-    $("operationList");
+    const operationList =
+        $("operationList");
 
 
-  if (!operationList) return;
+    if (!operationList)
+        return;
 
 
-  operationList.innerHTML =
-    "";
+    operationList.innerHTML =
+        "";
 
 
-  operations.forEach(
-    (operation, index) => {
+    operations.forEach(
+        (operation, index) => {
 
-      const row =
-        document.createElement(
-          "div"
-        );
-
-
-      row.className =
-        "operation-admin-row";
+            const row =
+                document.createElement(
+                    "div"
+                );
 
 
-      row.innerHTML = `
-        <div>
-
-          <strong>
-            ${escapeHTML(
-              operation.name
-            )}
-          </strong>
-
-          <span>
-            ₹${Number(
-              operation.rate
-            ).toFixed(2)}
-          </span>
-
-        </div>
-
-        <div>
-
-          <button
-            onclick="editOperation(${index})"
-          >
-            Edit
-          </button>
-
-          <button
-            onclick="deleteOperation(${index})"
-          >
-            Delete
-          </button>
-
-        </div>
-      `;
+            row.className =
+                "operation-admin-row";
 
 
-      operationList.appendChild(
-        row
-      );
+            row.innerHTML =
+                `
+                <div>
 
-    }
-  );
+                    <strong>
+                        ${escapeHTML(
+                            operation.name
+                        )}
+                    </strong>
+
+                    <span>
+                        ₹${Number(
+                            operation.rate
+                        ).toFixed(2)}
+                    </span>
+
+                </div>
+
+                <div>
+
+                    <button
+                        onclick="editOperation(${index})"
+                    >
+                        Edit
+                    </button>
+
+                    <button
+                        onclick="deleteOperation(${index})"
+                    >
+                        Delete
+                    </button>
+
+                </div>
+                `;
+
+
+            operationList.appendChild(
+                row
+            );
+
+        }
+    );
 
 }
 
 
 // ======================================================
-// ADMIN - ADD OPERATION
+// ADD OPERATION
 // ======================================================
 
 function addOperation() {
 
-  const nameInput =
-    $("newOperation");
+    const nameInput =
+        $("newOperation");
 
-  const rateInput =
-    $("newRate");
+    const rateInput =
+        $("newRate");
 
 
-  if (
-    !nameInput ||
-    !rateInput
-  ) {
+    if (
+        !nameInput ||
+        !rateInput
+    ) {
+
+        alert(
+            "Admin fields not found."
+        );
+
+        return;
+
+    }
+
+
+    const name =
+        nameInput.value.trim();
+
+
+    const rate =
+        Number(
+            rateInput.value
+        );
+
+
+    if (!name) {
+
+        alert(
+            "Please enter operation name."
+        );
+
+        return;
+
+    }
+
+
+    if (
+        Number.isNaN(rate) ||
+        rate < 0
+    ) {
+
+        alert(
+            "Please enter valid rate."
+        );
+
+        return;
+
+    }
+
+
+    operations.push({
+
+        name:
+            name,
+
+        rate:
+            rate
+
+    });
+
+
+    saveLocalData();
+
+
+    loadOperations();
+
+    loadAdminOperations();
+
+
+    nameInput.value =
+        "";
+
+    rateInput.value =
+        "";
+
 
     alert(
-      "Admin fields not found."
+        "Operation added successfully."
     );
-
-    return;
-
-  }
-
-
-  const name =
-    nameInput.value.trim();
-
-
-  const rate =
-    Number(
-      rateInput.value
-    );
-
-
-  if (!name) {
-
-    alert(
-      "Please enter operation name."
-    );
-
-    return;
-
-  }
-
-
-  if (
-    Number.isNaN(rate) ||
-    rate < 0
-  ) {
-
-    alert(
-      "Please enter valid rate."
-    );
-
-    return;
-
-  }
-
-
-  operations.push({
-    name: name,
-    rate: rate
-  });
-
-
-  saveLocalData();
-
-
-  loadOperations();
-
-  loadAdminOperations();
-
-
-  nameInput.value =
-    "";
-
-  rateInput.value =
-    "";
-
-
-  alert(
-    "Operation added successfully."
-  );
 
 }
 
 
 // ======================================================
-// ADMIN - EDIT OPERATION
+// EDIT OPERATION
 // ======================================================
 
 function editOperation(index) {
 
-  if (!operations[index]) return;
+    if (!operations[index])
+        return;
 
 
-  const current =
-    operations[index];
+    const current =
+        operations[index];
 
 
-  const newName =
-    prompt(
-      "Enter operation name:",
-      current.name
-    );
+    const newName =
+        prompt(
+            "Enter operation name:",
+            current.name
+        );
 
 
-  if (newName === null) return;
+    if (newName === null)
+        return;
 
 
-  const newRate =
-    prompt(
-      "Enter rate:",
-      current.rate
-    );
+    const newRate =
+        prompt(
+            "Enter rate:",
+            current.rate
+        );
 
 
-  if (newRate === null) return;
+    if (newRate === null)
+        return;
 
 
-  const rate =
-    Number(
-      newRate
-    );
-
-
-  if (
-    !newName.trim() ||
-    Number.isNaN(rate) ||
-    rate < 0
-  ) {
-
-    alert(
-      "Invalid operation details."
-    );
-
-    return;
-
-  }
-
-
-  operations[index] = {
-
-    name:
-      newName.trim(),
-
-    rate:
-      rate
-
-  };
-
-
-  saveLocalData();
-
-
-  loadOperations();
-
-  loadAdminOperations();
-
-
-  alert(
-    "Operation updated successfully."
-  );
-
-}
-
-
-// ======================================================
-// ADMIN - DELETE OPERATION
-// ======================================================
-
-function deleteOperation(index) {
-
-  if (!operations[index]) return;
-
-
-  const confirmDelete =
-    confirm(
-      `Delete "${operations[index].name}"?`
-    );
-
-
-  if (!confirmDelete) return;
-
-
-  operations.splice(
-    index,
-    1
-  );
-
-
-  saveLocalData();
-
-
-  loadOperations();
-
-  loadAdminOperations();
-
-}
-
-
-// ======================================================
-// SET DEFAULT DATE
-// ======================================================
-
-function setDefaultDate() {
-
-  const workDate =
-    $("workDate");
-
-
-  if (!workDate) return;
-
-
-  if (!workDate.value) {
-
-    workDate.value =
-      getTodayDate();
-
-  }
-
-}
-
-
-// ======================================================
-// RAZORPAY PREMIUM SUBSCRIPTION
-// ======================================================
-
-async function continuePremium() {
-
-  const user =
-    auth.currentUser;
-
-
-  if (!user) {
-
-    alert(
-      "Please login first."
-    );
-
-    return;
-
-  }
-
-
-  try {
-
-    // Call Vercel backend
-
-    const response =
-      await fetch(
-        "/api/create-subscription",
-        {
-          method: "POST",
-
-          headers: {
-            "Content-Type":
-              "application/json"
-          },
-
-          body: JSON.stringify({
-
-            userId:
-              user.uid,
-
-            email:
-              user.email,
-
-            name:
-              user.displayName ||
-              "WorkerPay User"
-
-          })
-        }
-      );
-
-
-    const data =
-      await response.json();
+    const rate =
+        Number(
+            newRate
+        );
 
 
     if (
-      !response.ok ||
-      !data.subscriptionId
+        !newName.trim() ||
+        Number.isNaN(rate) ||
+        rate < 0
     ) {
 
-      console.error(
-        "Subscription error:",
-        data
-      );
-
-
-      alert(
-        "Unable to start Premium. Please try again."
-      );
-
-      return;
-
-    }
-
-
-    // Razorpay Checkout
-
-    const options = {
-
-      key:
-        "rzp_live_TYkJpDlsipwl5D",
-
-      subscription_id:
-        data.subscriptionId,
-
-      name:
-        "WorkerPay",
-
-      description:
-        "WorkerPay Premium - ₹20/month",
-
-      prefill: {
-
-        name:
-          user.displayName || "",
-
-        email:
-          user.email || ""
-
-      },
-
-      theme: {
-
-        color:
-          "#111827"
-
-      },
-
-
-   handler: async function (response) {
-  console.log(
-    "Razorpay payment response:",
-    response
-  );
-
-  alert(
-    "Payment successful! Premium activation is being activated..."
-  );
-
-  // Wait for Razorpay webhook to update Firestore
-  let premiumActivated = false;
-
-  for (let i = 0; i < 10; i++) {
-    await new Promise(resolve =>
-      setTimeout(resolve, 2000)
-    );
-
-    const currentUser = auth.currentUser;
-
-    if (!currentUser) {
-      break;
-    }
-
-    const userRef = doc(
-      db,
-      "users",
-      currentUser.uid
-    );
-
-    const userSnap = await getDoc(userRef);
-
-    if (userSnap.exists()) {
-      const userData = userSnap.data();
-
-      console.log(
-        "Checking Premium status:",
-        userData.subscriptionStatus
-      );
-
-      if (
-        userData.subscriptionStatus ===
-        "premium"
-      ) {
-        premiumActivated = true;
-
         alert(
-          "🎉 Premium Activated Successfully!"
+            "Invalid operation details."
         );
 
-        await refreshTrialUI();
+        return;
 
-        break;
-      }
     }
-  }
-
-  if (!premiumActivated) {
-    alert(
-      "Payment successful. Premium activation is still processing. Please refresh after a moment."
-    );
-
-    await refreshTrialUI();
-  }
-},
 
 
-      modal: {
+    operations[index] = {
 
-        ondismiss:
-          function () {
+        name:
+            newName.trim(),
 
-            console.log(
-              "Razorpay checkout closed."
-            );
-
-          }
-
-      }
+        rate:
+            rate
 
     };
 
 
-    if (
-      typeof Razorpay ===
-      "undefined"
-    ) {
-
-      alert(
-        "Razorpay Checkout could not load. Please refresh the page."
-      );
-
-      return;
-
-    }
+    saveLocalData();
 
 
-    const rzp =
-      new Razorpay(
-        options
-      );
+    loadOperations();
 
-
-    rzp.open();
-
-
-  } catch (error) {
-
-    console.error(
-      "Premium error:",
-      error
-    );
+    loadAdminOperations();
 
 
     alert(
-      "Something went wrong. Please try again."
+        "Operation updated successfully."
     );
-
-  }
 
 }
 
 
 // ======================================================
-// UPDATE TRIAL BANNER
+// DELETE OPERATION
+// ======================================================
+
+function deleteOperation(index) {
+
+    if (!operations[index])
+        return;
+
+
+    const confirmDelete =
+        confirm(
+            `Delete "${operations[index].name}"?`
+        );
+
+
+    if (!confirmDelete)
+        return;
+
+
+    operations.splice(
+        index,
+        1
+    );
+
+
+    saveLocalData();
+
+
+    loadOperations();
+
+    loadAdminOperations();
+
+}
+
+
+// ======================================================
+// DEFAULT DATE
+// ======================================================
+
+function setDefaultDate() {
+
+    const workDate =
+        $("workDate");
+
+
+    if (!workDate)
+        return;
+
+
+    workDate.value =
+        getTodayDate();
+
+}
+
+
+// ======================================================
+// RAZORPAY PREMIUM
+// ======================================================
+
+async function continuePremium() {
+
+    const user =
+        auth.currentUser;
+
+
+    if (!user) {
+
+        alert(
+            "Please login first."
+        );
+
+        return;
+
+    }
+
+
+    try {
+
+        const response =
+            await fetch(
+                "/api/create-subscription",
+                {
+
+                    method:
+                        "POST",
+
+                    headers: {
+
+                        "Content-Type":
+                            "application/json"
+
+                    },
+
+                    body:
+                        JSON.stringify({
+
+                            userId:
+                                user.uid,
+
+                            email:
+                                user.email,
+
+                            name:
+                                user.displayName ||
+                                "WorkerPay User"
+
+                        })
+
+                }
+            );
+
+
+        const data =
+            await response.json();
+
+
+        if (
+            !response.ok ||
+            !data.subscriptionId
+        ) {
+
+            console.error(
+                "Subscription error:",
+                data
+            );
+
+
+            alert(
+                "Unable to start Premium. Please try again."
+            );
+
+            return;
+
+        }
+
+
+        if (
+            typeof Razorpay ===
+            "undefined"
+        ) {
+
+            alert(
+                "Razorpay Checkout could not load. Please refresh."
+            );
+
+            return;
+
+        }
+
+
+        const options = {
+
+            key:
+                "rzp_live_TYkJpDlsipwl5D",
+
+            subscription_id:
+                data.subscriptionId,
+
+            name:
+                "WorkerPay",
+
+            description:
+                "WorkerPay Premium - ₹20/month",
+
+            prefill: {
+
+                name:
+                    user.displayName || "",
+
+                email:
+                    user.email || ""
+
+            },
+
+            theme: {
+
+                color:
+                    "#111827"
+
+            },
+
+            handler:
+                async function (response) {
+
+                    console.log(
+                        "Razorpay response:",
+                        response
+                    );
+
+
+                    alert(
+                        "Payment successful! Premium activation is being processed..."
+                    );
+
+
+                    await refreshTrialUI();
+
+                },
+
+
+            modal: {
+
+                ondismiss:
+                    function () {
+
+                        console.log(
+                            "Razorpay checkout closed."
+                        );
+
+                    }
+
+            }
+
+        };
+
+
+        const razorpay =
+            new Razorpay(
+                options
+            );
+
+
+        razorpay.open();
+
+
+    } catch (error) {
+
+        console.error(
+            "Premium error:",
+            error
+        );
+
+
+        alert(
+            "Something went wrong. Please try again."
+        );
+
+    }
+
+}
+
+
+// ======================================================
+// TRIAL BANNER
 // ======================================================
 
 function updateTrialBanner(
-  userData
+    userData
 ) {
 
-  const banner =
-    $("trialBanner");
+    const banner =
+        $("trialBanner");
 
-  const title =
-    $("trialTitle");
+    const title =
+        $("trialTitle");
 
-  const message =
-    $("trialMessage");
+    const message =
+        $("trialMessage");
 
-  const dayText =
-    $("trialDay");
-
-
-  if (
-    !banner ||
-    !userData
-  ) {
-    return;
-  }
+    const dayText =
+        $("trialDay");
 
 
-  // Premium user
-
-  if (
-    userData.subscriptionStatus ===
-    "premium"
-  ) {
-
-    banner.style.display =
-      "none";
-
-    return;
-
-  }
+    if (
+        !banner ||
+        !userData
+    )
+        return;
 
 
-  // Missing trial dates
+    if (
+        userData.subscriptionStatus ===
+        "premium"
+    ) {
 
-  if (
-    !userData.trialStart ||
-    !userData.trialEnd
-  ) {
+        banner.style.display =
+            "none";
 
-    banner.style.display =
-      "none";
-
-    return;
-
-  }
-
-
-  const trialStart =
-    convertFirestoreDate(
-      userData.trialStart
-    );
-
-
-  const trialEnd =
-    convertFirestoreDate(
-      userData.trialEnd
-    );
-
-
-  if (
-    !trialStart ||
-    !trialEnd
-  ) {
-
-    banner.style.display =
-      "none";
-
-    return;
-
-  }
-
-
-  const now =
-    new Date();
-
-
-  // Trial expired
-
-  if (
-    now >= trialEnd
-  ) {
-
-    if (title) {
-
-      title.textContent =
-        "⏰ Free Trial Ended";
+        return;
 
     }
 
 
-    if (message) {
+    if (
+        !userData.trialStart ||
+        !userData.trialEnd
+    ) {
 
-      message.textContent =
-        "Tumhara 3-day Free Trial khatam ho gaya hai.";
+        banner.style.display =
+            "none";
+
+        return;
+
+    }
+
+
+    const trialStart =
+        convertFirestoreDate(
+            userData.trialStart
+        );
+
+
+    const trialEnd =
+        convertFirestoreDate(
+            userData.trialEnd
+        );
+
+
+    if (
+        !trialStart ||
+        !trialEnd
+    ) {
+
+        banner.style.display =
+            "none";
+
+        return;
 
     }
 
 
-    if (dayText) {
+    const now =
+        new Date();
 
-      dayText.textContent =
-        "Premium ₹20/month se continue karo";
+
+    // ==================================================
+    // EXPIRED
+    // ==================================================
+
+    if (
+        now >= trialEnd
+    ) {
+
+        if (title)
+
+            title.textContent =
+                "⏰ Free Trial Ended";
+
+
+        if (message)
+
+            message.textContent =
+                "Tumhara 3-day Free Trial khatam ho gaya hai.";
+
+
+        if (dayText)
+
+            dayText.textContent =
+                "Premium ₹20/month se continue karo";
+
+
+        banner.style.display =
+            "block";
+
+
+        return;
 
     }
+
+
+    const difference =
+        now.getTime() -
+        trialStart.getTime();
+
+
+    let currentDay =
+        Math.floor(
+            difference /
+            (1000 * 60 * 60 * 24)
+        ) + 1;
+
+
+    currentDay =
+        Math.max(
+            1,
+            Math.min(
+                currentDay,
+                3
+            )
+        );
+
+
+    let ordinal;
+
+
+    if (currentDay === 1) {
+
+        ordinal =
+            "1st";
+
+    } else if (currentDay === 2) {
+
+        ordinal =
+            "2nd";
+
+    } else {
+
+        ordinal =
+            "3rd";
+
+    }
+
+
+    if (title)
+
+        title.textContent =
+            "🎉 Your Free Trial Started";
+
+
+    if (message)
+
+        message.textContent =
+            `Aaj tumhara Free Trial ka ${ordinal} day hai`;
+
+
+    if (dayText)
+
+        dayText.textContent =
+            `Free Trial: Day ${currentDay} / 3`;
 
 
     banner.style.display =
-      "block";
-
-
-    return;
-
-  }
-
-
-  // Calculate current day
-
-  const difference =
-    now.getTime() -
-    trialStart.getTime();
-
-
-  let currentDay =
-    Math.floor(
-      difference /
-      (1000 * 60 * 60 * 24)
-    ) + 1;
-
-
-  currentDay =
-    Math.max(
-      1,
-      Math.min(
-        currentDay,
-        3
-      )
-    );
-
-
-  let ordinal;
-
-
-  if (
-    currentDay === 1
-  ) {
-
-    ordinal = "1st";
-
-  } else if (
-    currentDay === 2
-  ) {
-
-    ordinal = "2nd";
-
-  } else {
-
-    ordinal = "3rd";
-
-  }
-
-
-  if (title) {
-
-    title.textContent =
-      "🎉 Your Free Trial Started";
-
-  }
-
-
-  if (message) {
-
-    message.textContent =
-      `Aaj tumhara Free Trial ka ${ordinal} day hai`;
-
-  }
-
-
-  if (dayText) {
-
-    dayText.textContent =
-      `Free Trial: Day ${currentDay} / 3`;
-
-  }
-
-
-  banner.style.display =
-    "block";
+        "block";
 
 }
 
 
 // ======================================================
-// UPDATE TRIAL CARD
+// TRIAL CARD
 // ======================================================
 
 function updateTrialCard(
-  userData
+    userData
 ) {
 
-  const card =
-    $("trialCard");
+    const card =
+        $("trialCard");
 
-  const icon =
-    $("trialIcon");
+    const icon =
+        $("trialIcon");
 
-  const title =
-    $("trialCardTitle");
+    const title =
+        $("trialCardTitle");
 
-  const message =
-    $("trialCardMessage");
+    const message =
+        $("trialCardMessage");
 
-  const progress =
-    $("trialProgress");
+    const progress =
+        $("trialProgress");
 
-  const next =
-    $("trialNext");
+    const next =
+        $("trialNext");
 
-  const premiumButton =
-    $("premiumButton");
-
-
-  if (
-    !card ||
-    !userData
-  ) {
-    return;
-  }
+    const premiumButton =
+        $("premiumButton");
 
 
-  // Premium user
+    if (
+        !card ||
+        !userData
+    )
+        return;
 
-  if (
-    userData.subscriptionStatus ===
-    "premium"
-  ) {
+
+    // ==================================================
+    // PREMIUM
+    // ==================================================
+
+    if (
+        userData.subscriptionStatus ===
+        "premium"
+    ) {
+
+        card.style.display =
+            "none";
+
+        return;
+
+    }
+
+
+    if (
+        !userData.trialStart ||
+        !userData.trialEnd
+    ) {
+
+        card.style.display =
+            "none";
+
+        return;
+
+    }
+
+
+    const trialStart =
+        convertFirestoreDate(
+            userData.trialStart
+        );
+
+
+    const trialEnd =
+        convertFirestoreDate(
+            userData.trialEnd
+        );
+
+
+    if (
+        !trialStart ||
+        !trialEnd
+    ) {
+
+        card.style.display =
+            "none";
+
+        return;
+
+    }
+
+
+    const now =
+        new Date();
+
+
+    // ==================================================
+    // EXPIRED
+    // ==================================================
+
+    if (
+        now >= trialEnd
+    ) {
+
+        if (icon)
+
+            icon.textContent =
+                "⏰";
+
+
+        if (title)
+
+            title.textContent =
+                "Free Trial Ended";
+
+
+        if (message)
+
+            message.textContent =
+                "Tumhara 3-day Free Trial khatam ho gaya hai.";
+
+
+        if (progress)
+
+            progress.textContent =
+                "Free Trial: Expired";
+
+
+        if (next)
+
+            next.textContent =
+                "Premium ₹20/month se continue karo";
+
+
+        if (premiumButton)
+
+            premiumButton.textContent =
+                "Premium ₹20/month";
+
+
+        card.style.display =
+            "flex";
+
+
+        return;
+
+    }
+
+
+    const difference =
+        now.getTime() -
+        trialStart.getTime();
+
+
+    let currentDay =
+        Math.floor(
+            difference /
+            (1000 * 60 * 60 * 24)
+        ) + 1;
+
+
+    currentDay =
+        Math.max(
+            1,
+            Math.min(
+                currentDay,
+                3
+            )
+        );
+
+
+    let ordinal;
+
+
+    if (currentDay === 1) {
+
+        ordinal =
+            "1st";
+
+    } else if (currentDay === 2) {
+
+        ordinal =
+            "2nd";
+
+    } else {
+
+        ordinal =
+            "3rd";
+
+    }
+
+
+    if (icon)
+
+        icon.textContent =
+            currentDay === 3
+                ? "🔥"
+                : "🎉";
+
+
+    if (title)
+
+        title.textContent =
+            "Your Free Trial Started";
+
+
+    if (message)
+
+        message.textContent =
+            `Aaj tumhara Free Trial ka ${ordinal} day hai.`;
+
+
+    if (progress)
+
+        progress.textContent =
+            `Free Trial: Day ${currentDay} / 3`;
+
+
+    if (next)
+
+        next.textContent =
+            "Next: Premium ₹20/month";
+
+
+    if (premiumButton)
+
+        premiumButton.textContent =
+            "₹20 / month";
+
 
     card.style.display =
-      "none";
-
-    return;
-
-  }
-
-
-  // Missing trial dates
-
-  if (
-    !userData.trialStart ||
-    !userData.trialEnd
-  ) {
-
-    card.style.display =
-      "none";
-
-    return;
-
-  }
-
-
-  const trialStart =
-    convertFirestoreDate(
-      userData.trialStart
-    );
-
-
-  const trialEnd =
-    convertFirestoreDate(
-      userData.trialEnd
-    );
-
-
-  if (
-    !trialStart ||
-    !trialEnd
-  ) {
-
-    card.style.display =
-      "none";
-
-    return;
-
-  }
-
-
-  const now =
-    new Date();
-
-
-  // ================= EXPIRED =================
-
-  if (
-    now >= trialEnd
-  ) {
-
-    if (icon) {
-      icon.textContent = "⏰";
-    }
-
-
-    if (title) {
-
-      title.textContent =
-        "Free Trial Ended";
-
-    }
-
-
-    if (message) {
-
-      message.textContent =
-        "Tumhara 3-day Free Trial khatam ho gaya hai.";
-
-    }
-
-
-    if (progress) {
-
-      progress.textContent =
-        "Free Trial: Expired";
-
-    }
-
-
-    if (next) {
-
-      next.textContent =
-        "Premium ₹20/month se continue karo";
-
-    }
-
-
-    if (premiumButton) {
-
-      premiumButton.textContent =
-        "Premium ₹20/month";
-
-    }
-
-
-    card.style.display =
-      "flex";
-
-
-    return;
-
-  }
-
-
-  // ================= ACTIVE TRIAL =================
-
-  const difference =
-    now.getTime() -
-    trialStart.getTime();
-
-
-  let currentDay =
-    Math.floor(
-      difference /
-      (1000 * 60 * 60 * 24)
-    ) + 1;
-
-
-  currentDay =
-    Math.max(
-      1,
-      Math.min(
-        currentDay,
-        3
-      )
-    );
-
-
-  let ordinal;
-
-
-  if (
-    currentDay === 1
-  ) {
-
-    ordinal = "1st";
-
-  } else if (
-    currentDay === 2
-  ) {
-
-    ordinal = "2nd";
-
-  } else {
-
-    ordinal = "3rd";
-
-  }
-
-
-  if (icon) {
-
-    icon.textContent =
-      currentDay === 3
-        ? "🔥"
-        : "🎉";
-
-  }
-
-
-  if (title) {
-
-    title.textContent =
-      "Your Free Trial Started";
-
-  }
-
-
-  if (message) {
-
-    message.textContent =
-      `Aaj tumhara Free Trial ka ${ordinal} day hai.`;
-
-  }
-
-
-  if (progress) {
-
-    progress.textContent =
-      `Free Trial: Day ${currentDay} / 3`;
-
-  }
-
-
-  if (next) {
-
-    next.textContent =
-      "Next: Premium ₹20/month";
-
-  }
-
-
-  if (premiumButton) {
-
-    premiumButton.textContent =
-      "₹20 / month";
-
-  }
-
-
-  card.style.display =
-    "flex";
+        "flex";
 
 }
 
@@ -3146,83 +3772,77 @@ function updateTrialCard(
 // ======================================================
 
 function convertFirestoreDate(
-  value
+    value
 ) {
 
-  if (!value) {
-    return null;
-  }
+    if (!value)
+        return null;
 
 
-  try {
+    try {
 
-    // Firestore Timestamp
+        if (
+            typeof value.toDate ===
+            "function"
+        ) {
 
-    if (
-      typeof value.toDate ===
-      "function"
-    ) {
+            return value.toDate();
 
-      return value.toDate();
+        }
+
+
+        if (
+            value instanceof Date
+        ) {
+
+            return value;
+
+        }
+
+
+        if (
+            value.seconds !==
+            undefined
+        ) {
+
+            return new Date(
+                Number(
+                    value.seconds
+                ) * 1000
+            );
+
+        }
+
+
+        const date =
+            new Date(value);
+
+
+        if (
+            !Number.isNaN(
+                date.getTime()
+            )
+        ) {
+
+            return date;
+
+        }
+
+
+        return null;
+
+
+    } catch (error) {
+
+        console.error(
+            "Date conversion error:",
+            error
+        );
+
+
+        return null;
 
     }
-
-
-    // JavaScript Date
-
-    if (
-      value instanceof Date
-    ) {
-
-      return value;
-
-    }
-
-
-    // Firestore timestamp-like object
-
-    if (
-      value.seconds !==
-      undefined
-    ) {
-
-      return new Date(
-        Number(value.seconds) *
-        1000
-      );
-
-    }
-
-
-    // String / number
-
-    const date =
-      new Date(value);
-
-
-    if (
-      !Number.isNaN(
-        date.getTime()
-      )
-    ) {
-
-      return date;
-
-    }
-
-
-    return null;
-
-  } catch (error) {
-
-    console.error(
-      "Date conversion error:",
-      error
-    );
-
-    return null;
-
-  }
 
 }
 
@@ -3233,27 +3853,97 @@ function convertFirestoreDate(
 
 function hideTrialUI() {
 
-  const banner =
-    $("trialBanner");
+    const banner =
+        $("trialBanner");
 
-  const card =
-    $("trialCard");
-
-
-  if (banner) {
-
-    banner.style.display =
-      "none";
-
-  }
+    const card =
+        $("trialCard");
 
 
-  if (card) {
+    if (banner) {
 
-    card.style.display =
-      "none";
+        banner.style.display =
+            "none";
 
-  }
+    }
+
+
+    if (card) {
+
+        card.style.display =
+            "none";
+
+    }
+
+}
+
+
+// ======================================================
+// UPDATE TRIAL UI BASED ON CURRENT SECTION
+// ======================================================
+
+async function updateTrialUIForSection(
+    sectionId,
+    userData = null
+) {
+
+    // ==================================================
+    // VERY IMPORTANT
+    // Trial/Premium UI only Dashboard
+    // ==================================================
+
+    if (
+        sectionId !==
+        "dashboard"
+    ) {
+
+        hideTrialUI();
+
+        return;
+
+    }
+
+
+    const user =
+        auth.currentUser;
+
+
+    if (!user) {
+
+        hideTrialUI();
+
+        return;
+
+    }
+
+
+    if (!userData) {
+
+        userData =
+            await getCurrentUserData(
+                user
+            );
+
+    }
+
+
+    if (!userData) {
+
+        hideTrialUI();
+
+        return;
+
+    }
+
+
+    updateTrialBanner(
+        userData
+    );
+
+
+    updateTrialCard(
+        userData
+    );
 
 }
 
@@ -3264,133 +3954,167 @@ function hideTrialUI() {
 
 async function refreshTrialUI() {
 
-  const user =
-    auth.currentUser;
+    const user =
+        auth.currentUser;
 
 
-  if (!user) {
+    if (!user) {
 
-    hideTrialUI();
+        hideTrialUI();
 
-    return;
+        return;
 
-  }
-
-
-  const userData =
-    await getCurrentUserData(
-      user
-    );
+    }
 
 
-  if (userData) {
+    // Only show if Dashboard is active.
 
-    updateTrialBanner(
-      userData
-    );
+    const dashboard =
+        $("dashboard");
 
-    updateTrialCard(
-      userData
-    );
 
-  }
+    if (
+        !dashboard ||
+        dashboard.style.display === "none"
+    ) {
+
+        hideTrialUI();
+
+        return;
+
+    }
+
+
+    const userData =
+        await getCurrentUserData(
+            user
+        );
+
+
+    if (userData) {
+
+        updateTrialUIForSection(
+            "dashboard",
+            userData
+        );
+
+    } else {
+
+        hideTrialUI();
+
+    }
 
 }
 
 
 // ======================================================
-// INITIAL SETUP
-// ======================================================
-
-loadLocalData();
-
-setDefaultDate();
-
-
-// ======================================================
-// WINDOW FUNCTIONS
-// Required because index.html uses onclick="..."
+// GLOBAL WINDOW FUNCTIONS
 // ======================================================
 
 window.loginUser =
-  loginUser;
+    loginUser;
 
 window.signupUser =
-  signupUser;
+    signupUser;
 
 window.showLogin =
-  showLogin;
+    showLogin;
 
 window.showSignup =
-  showSignup;
+    showSignup;
 
 window.showForgotPassword =
-  showForgotPassword;
+    showForgotPassword;
 
 window.resetPassword =
-  resetPassword;
+    resetPassword;
 
 window.logout =
-  logout;
+    logout;
 
 window.showSection =
-  showSection;
+    showSection;
 
 window.calculatePreview =
-  calculatePreview;
+    calculatePreview;
 
 window.saveWork =
-  saveWork;
+    saveWork;
 
 window.deleteWork =
-  deleteWork;
+    deleteWork;
 
 window.viewPhoto =
-  viewPhoto;
+    viewPhoto;
 
 window.addOperation =
-  addOperation;
+    addOperation;
 
 window.editOperation =
-  editOperation;
+    editOperation;
 
 window.deleteOperation =
-  deleteOperation;
+    deleteOperation;
 
 window.continuePremium =
-  continuePremium;
+    continuePremium;
 
 
 // ======================================================
 // EVENT LISTENERS
 // ======================================================
 
-const operationSelectElement =
-  $("operationSelect");
+document.addEventListener(
+    "DOMContentLoaded",
+    () => {
+
+        const operationSelect =
+            $("operationSelect");
 
 
-if (operationSelectElement) {
+        if (operationSelect) {
 
-  operationSelectElement.addEventListener(
-    "change",
-    calculatePreview
-  );
+            operationSelect.addEventListener(
+                "change",
+                calculatePreview
+            );
 
-}
-
-
-const quantityElement =
-  $("quantity");
+        }
 
 
-if (quantityElement) {
+        const quantity =
+            $("quantity");
 
-  quantityElement.addEventListener(
-    "input",
-    calculatePreview
-  );
 
-}
+        if (quantity) {
+
+            quantity.addEventListener(
+                "input",
+                calculatePreview
+            );
+
+        }
+
+
+        setupPhotoPreview();
+
+
+        loadLocalData();
+
+
+        setDefaultDate();
+
+
+        loadOperations();
+
+
+        updateDashboard();
+
+
+        updateEarnings();
+
+    }
+);
 
 
 // ======================================================
@@ -3398,10 +4122,15 @@ if (quantityElement) {
 // ======================================================
 
 console.log(
-  "WorkerPay script.js loaded successfully."
+    "WorkerPay script.js loaded successfully."
 );
 
 console.log(
-  "Operations loaded:",
-  operations
+    "Today's local date:",
+    getTodayDate()
+);
+
+console.log(
+    "Operations:",
+    operations
 );
